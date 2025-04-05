@@ -166,7 +166,7 @@ const [hover, setHover] = useState(false);
 
 
 
-
+{/*
 <ImageListItem sx={{ marginTop: '150px' }} key="Subheader" cols={2}>
         <ListSubheader className='Title' component="div">ACME</ListSubheader>
 </ImageListItem>
@@ -207,7 +207,7 @@ const [hover, setHover] = useState(false);
           />
         </ImageListItem>
       ))}
-
+*/}
 
     </ImageList>
     </div>
