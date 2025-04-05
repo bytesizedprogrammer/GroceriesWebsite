@@ -7,20 +7,54 @@ specifies that any user authenticated via an API key can "create", "read",
 "update", and "delete" any "Todo" records.
 =========================================================================*/
 const schema = a.schema({
-  Todo: a
+
+  User: a
     .model({
-      content: a.string(),
+      //userID: a.id().required(),
+      email: a.email(),
+      //password: a.string(),
+      name: a.string(),
+      sentFriendRequests: a.hasMany('FriendsList', 'userID'), // This points to userIDOne in FriendsList
+      receivedFriendRequests: a.hasMany('FriendsList', 'userID2'), // This points to userIDTwo in FriendsList
+      stores: a.hasMany('Store', 'userID') // if userID fails, just try doing id as a backup
     })
     .authorization((allow) => [allow.publicApiKey()]),
-});
 
+  FriendsList: a.model({
+    userID: a.id(),
+    userID2: a.id(),
+    userIDOne: a.belongsTo('User', 'userID'), // userIDOne in FriendsList points to userID in User
+    userIDTwo: a.belongsTo('User', 'userID2'), // userIDTwo in FriendsList points to userID in User
+    statusOfRequest: a.enum(['PENDING', 'ACCEPTED', 'REJECTED']),
+  })
+  .authorization((allow) => [allow.publicApiKey()]),
+
+  Store: a.model({ // Good to go
+    //id: a.id().required(), // 
+    userID: a.id().required(),
+    storeName: a.string(),
+    objects: a.hasMany('Object', 'storeID'),
+    forWhoseAccount: a.belongsTo('User', 'userID'),
+  })
+  .authorization((allow) => [allow.publicApiKey()]),
+
+  Object: a.model({ // Good to go
+    storeID: a.id().required(), // objectID
+    objectName: a.string(),
+    objectImage: a.string(),
+    datetimeObjectWasAdded: a.datetime(),
+    quantityOfProduct: a.integer(),
+    addedByWhichUserID: a.belongsTo('Store', 'storeID'),
+  })
+  .authorization(allow => [allow.owner()]),
+
+});
 export type Schema = ClientSchema<typeof schema>;
 
 export const data = defineData({
   schema,
   authorizationModes: {
     defaultAuthorizationMode: "apiKey",
-    // API Key is used for a.allow.public() rules
     apiKeyAuthorizationMode: {
       expiresInDays: 30,
     },

@@ -1,0 +1,5 @@
+ I want to be in prod:
+   - npx ampx generate outputs --app-id d37m3ljsjk0hce --branch main
+
+ I want to be in dev:
+   - npx ampx sandbox

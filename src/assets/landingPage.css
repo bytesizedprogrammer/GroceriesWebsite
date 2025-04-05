@@ -1,0 +1,42 @@
+.mainContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+/* Unique to Landing Page */
+.Title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 250% !important;
+    margin-bottom: 10px;
+}
+
+
+
+
+
+
+/* Unique to pop-up */
+.toprightCorner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* Aligns items vertically */
+  width: 100%; /* Ensures full width */
+  padding: 10px;
+  border: 1px solid #ccc; /* Optional: for visualization */
+}
+
+.madeInvisible {
+    opacity: 0%;
+}
+
+
+.mainContainerTwo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column; /* flexDirection: 'column': This stacks the child elements (Typography and Button) vertically. */
+}

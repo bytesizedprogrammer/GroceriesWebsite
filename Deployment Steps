@@ -1,0 +1,7 @@
+To deploy:
+ 1) "npm run build" to ensure it's working
+ 2) "git add ."
+ 3) git commit -am "message here"  //do this ifno new files.  If new files do -m instead of -am
+ 4) eval "$(ssh-agent -s)"
+ 5) ssh-add ssh
+ 6) git push origin main

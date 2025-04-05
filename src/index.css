@@ -1,3 +1,4 @@
+/*
 body {
   margin: 0;
   background: linear-gradient(180deg, rgb(117, 81, 194), rgb(255, 255, 255));
@@ -8,7 +9,27 @@ body {
   justify-content: center;
   align-items: center;
 }
+*/
+body, #root {
+  margin: 0;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+}
 
+main {
+  flex-grow: 1; /* Allows content below the navbar to take up remaining space */
+  width: 100%;
+}
+
+.app-bar {
+  height: 10vh; /* Set Navbar height to 10% of the viewport height */
+}
+
+
+/*
 main {
   display: flex;
   flex-direction: column;
@@ -63,3 +84,4 @@ a {
   font-weight: 800;
   text-decoration: none;
 }
+  */
