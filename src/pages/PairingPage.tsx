@@ -277,13 +277,13 @@ const sendRequest =  (/*newRequest: string*/) => {
           {incomingRequests.map((user) => (
           <Div sx={{ width: '90%' }}>
           <Grid container spacing={3} sx={{ p: 2 }}>
-        <Grid item xs={8}>
+        <Grid>
           <Item sx={{ height: '45px' }}>{user.email}</Item>
         </Grid>
-        <Grid item xs>
+        <Grid >
           <Item><CheckIcon/></Item>
         </Grid>
-        <Grid item xs>
+        <Grid >
           <Item><ClearIcon/></Item>
         </Grid>
       </Grid>
@@ -300,7 +300,7 @@ const sendRequest =  (/*newRequest: string*/) => {
 
               
               {outGoingRequests.map((user) => (
-              <Grid item xs={6}>
+              <Grid >
                 <Item>{user.email}</Item>
               </Grid>
               ))}
