@@ -31,10 +31,10 @@ const schema = a.schema({
 
   Store: a.model({ // Good to go
     //id: a.id().required(), // 
-    userID: a.id().required(),
-    storeName: a.string(),
-    objects: a.hasMany('Object', 'storeID'),
-    forWhoseAccount: a.belongsTo('User', 'userID'),
+    userID: a.id().required(), // onCreation
+    storeName: a.string(), // onCreation
+    objects: a.hasMany('Object', 'storeID'), // update
+    forWhoseAccount: a.belongsTo('User', 'userID'), // onCreation
   })
   .authorization((allow) => [allow.publicApiKey()]),
 

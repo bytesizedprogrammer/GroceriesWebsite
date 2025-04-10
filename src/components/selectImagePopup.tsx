@@ -25,6 +25,8 @@ const Div = styled('div')({
 
 
 interface DynamicDialogPropsTwo {
+    value: string;
+
     open: boolean;
     onOpen: () => void;
     onClose: () => void;
@@ -36,7 +38,12 @@ type ImageItem = {
     title: string;
 }
 
-const DynamicDialog: React.FC<DynamicDialogPropsTwo> = ({ open, onClose }) => {
+type StoreType = {
+    title: string;
+}
+
+
+const DynamicDialog: React.FC<DynamicDialogPropsTwo> = ({ value, open, onClose }) => {
     const [imageList, setImageList] = useState<ImageItem[]>(itemData);
 
     const theme = useTheme();
@@ -46,8 +53,15 @@ const DynamicDialog: React.FC<DynamicDialogPropsTwo> = ({ open, onClose }) => {
 
   const handleSave = (selectedImage: string, selectedImageTitle: string) => {
     // @ts-ignore
-    onClose(selectedImage, selectedImageTitle); // Send data back, MUI components are weird so "open" can send parent to component, and "close" can send component to parent
+    onClose("img", selectedImage, selectedImageTitle); // Send data back, MUI components are weird so "open" can send parent to component, and "close" can send component to parent
   };
+
+  const [storeName, setStoreName] = useState<StoreType[]>();
+  const handleStoreSelection = () => {
+    // if storeName == a17514d0-089f-48a3-bcb2-03ed82da2e10
+    // @ts-ignore
+    onClose("store", storeName);
+  }
 
   
   const [searchVal, setSearchVal] = useState<string>("");
@@ -73,62 +87,74 @@ const DynamicDialog: React.FC<DynamicDialogPropsTwo> = ({ open, onClose }) => {
     height: isSmallScreen ? "100%" : isMediumScreen ? "100%" : "100%",
   };
 
+
+  
+
     return (
-        <div>
-          <Dialog open={open} onClose={onClose}>
-            <div className="toprightCorner">
-                <ClearIcon className="madeInvisible" />
-                <ClearIcon onClick={() => onClose()} />
-            </div>
+  <div>
+    <Dialog open={open} onClose={onClose}>
+      <div className="toprightCorner">
+        <ClearIcon className="madeInvisible" />
+        <ClearIcon onClick={() => onClose()} />
+      </div>
 
-            <div className="mainContainer">
-            <Typography variant="h3" sx={{ padding: 2 }}>
-             Select an Image
-            </Typography>
-            </div>
+      <div className="mainContainer">
+        <Typography variant="h3" sx={{ padding: 2 }}>
+          Select an Image
+        </Typography>
+      </div>
 
-    
-
-            <div className="mainContainer">
-            <Typography variant="h3" sx={{ padding: 2 }}>
-            
+      {value === "img" ? (
+        <div className="mainContainer">
+          <Typography variant="h3" sx={{ padding: 2 }}>
             <Div>
-            <TextField
-                    label="Search Value"
-                    variant="outlined"
-                    fullWidth
-                    margin="normal"
-                    
-                sx={{ width: '80%' }} // if big screen, make 60% insetad of 80%
-                    value={searchVal}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchVal(String(e.target.value))}
-                  />
-                  </Div>
+              <TextField
+                label="Search Value"
+                variant="outlined"
+                fullWidth
+                margin="normal"
+                sx={{ width: '80%' }}
+                value={searchVal}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchVal(e.target.value)}
+              />
+            </Div>
             <Div>
-            <ImageList 
-          sx = {sxStyles}        
-        >
-            {imageList.map((item, index) => ( 
-        <ImageListItem key={`${item.img}${index}`} >
-          <img
-            style={{ cursor: 'pointer' }}
-            srcSet={`${item.img}?w=248&fit=crop&auto=format&dpr=2 2x`}
-            src={`${item.img}?w=248&fit=crop&auto=format`}
-            alt={item.title}
-            loading="lazy"
-            onClick={() => {
-              handleSave(item.img, item.title)
-            }}
-          />
-        </ImageListItem>
-      ))}
-        </ImageList>
-        </Div>
-            </Typography>
-            </div>
-            </Dialog>
+              <ImageList sx={sxStyles}>
+                {imageList.map((item, index) => (
+                  <ImageListItem key={`${item.img}${index}`}>
+                    <img
+                      style={{ cursor: 'pointer' }}
+                      srcSet={`${item.img}?w=248&fit=crop&auto=format&dpr=2 2x`}
+                      src={`${item.img}?w=248&fit=crop&auto=format`}
+                      alt={item.title}
+                      loading="lazy"
+                      onClick={() => {
+                        handleSave(item.img, item.title);
+                      }}
+                    />
+                  </ImageListItem>
+                ))}
+              </ImageList>
+            </Div>
+          </Typography>
         </div>
-    );
+      ) : (
+        <div className="mainContainer">
+         <input 
+  type="text" 
+  // @ts-ignore
+  value={storeName}
+  // @ts-ignore 
+  onChange={(e) => setStoreName(e.target.value)} 
+/>
+
+          <button onClick={() => handleStoreSelection()}> ASD </button>
+        </div>
+      )}
+    </Dialog>
+  </div>
+);
+
 };
 
 

@@ -10,6 +10,15 @@ import { TbHandFinger } from "react-icons/tb";
 
 import Popup from "../components/selectImagePopup.tsx";
 
+import { generateClient } from "aws-amplify/data";
+// @ts-ignore
+import type { Schema } from "../amplify/data/resource";
+import { useAuthenticator } from '@aws-amplify/ui-react'; //useAuthenticator,
+
+
+const client = generateClient<Schema>();
+
+
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
   clipPath: 'inset(50%)',
@@ -66,6 +75,7 @@ const AddItemPage: React.FC = () => {
     const [selectedImage, setSelectedImage] = useState<string>("");
     const [selectedImageTitle, setSelectedImageTitle] = useState<string>("");
 
+    const [storesToSendTo, setStoresToSendTo] = useState([]);
 
   useEffect(() => {
     console.log(`
@@ -79,18 +89,69 @@ const AddItemPage: React.FC = () => {
 
 
 
-  const openWindow = () => {
-    setOpen(true);
-  }
+  const user = useAuthenticator();
 
-  const handleClose = (img: string, title: string) => {
+  useEffect(() => {  
+    /*
+    client.models.User.get({ id: user.user.userId }).then((userData) => {
+      //console.log("Word", userData)
+      console.log('test: ', userData.data);
+      if (!(userData.data)) {
+        client.models.User.create(createObj).then(() => {});
+      }
+    })
+    */
+  }, []);
+  
+
+  const [popupType, setPopupType] = useState<string>("");
+
+  const openWindow = (type: string) => {
+    setPopupType(type); // set what the popup is for
+    setOpen(true); // open the popup
+  };
+  
+
+  const handleClose = (type: string, img: string, title: string) => {
     setOpen(false);
+    
+    if (type == "img") {
     if (img) {
       setSelectedImage(img); // Store received data
       setSelectedImageTitle(title);
       console.log("Received from Dialog:", img, title);
+    }} else {
+      // store handling
+      console.log(`img: ${img}`);
+
+      const obj = { storeName: img }
+
+
+      // have API create store
+        //client.models.Store
+
+
+      /* 
+      fetch newest object created assuming create worked
+
+      this sets it to list of store names 
+      and setsstorename to new one
+      
+      // @ts-ignore
+      setStoresToSendTo([...storesToSendTo, obj]);
+      setStoreName(img);
+      */
     }
   }
+
+  
+  const authContext = { userID: "54182438-10a1-70ec-b8c7-4b7ddd628241" }
+  // first needs auth context before i can do this actually
+  useEffect(() => {
+    client.models.User.get({ id: authContext.userID }).then((userData) => {
+      console.log("USERDATA FETCHED FOR SAKE OF ADD NEW ITEM: ", userData)
+    });
+  }, []);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]; // Get the first selected file
@@ -110,6 +171,17 @@ const AddItemPage: React.FC = () => {
   const submitForm = async (e: React.FormEvent) => {
     e.preventDefault(); 
 
+    const uuid = crypto.randomUUID();
+
+
+    console.log("Ts pmo icl sybau: ", client.models.Object)
+  
+
+    const createObj = {
+      id: uuid,
+    };
+
+    /*
     console.log('Product Name:', productName);
     console.log('Quantity:', quantityOfProduct);
     console.log('Store Name: ', storeName);
@@ -121,6 +193,7 @@ const AddItemPage: React.FC = () => {
     setSelectedAccount('');
     setSelectedImage('');
     setSelectedImageTitle('');
+    */
   }
 
 /*
@@ -148,6 +221,7 @@ const AddItemPage: React.FC = () => {
 
       // @ts-ignore
       onClose={handleClose}
+      value={popupType}
     />
 
     <form onSubmit={submitForm}>
@@ -183,6 +257,8 @@ const AddItemPage: React.FC = () => {
 
     {/* Make conditional to do either new store or dropdown of stores you've already done */}
 	  <Div>
+
+      {/*
       <TextField
         label="Store"
         variant="outlined"
@@ -193,6 +269,29 @@ const AddItemPage: React.FC = () => {
 		value={storeName}
 		onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStoreName(String(e.target.value))}
       />
+      */}
+
+      <Select displayEmpty sx={{ width: '80%' }}
+        value={storeName}
+
+        // @ts-ignore
+        onChange={(e: SelectChangeEvent<string>) => setStoreName(e.target.value)}
+        >
+      <MenuItem value="" disabled>
+    Select a store to put this in
+  </MenuItem>
+
+
+  <MenuItem value="myStore"  onClick={() => openWindow("")}>Add new store</MenuItem>
+   
+  {storesToSendTo.map((store, index) => (
+        <MenuItem key={index} value={store.storeName}>
+          {store.storeName}
+        </MenuItem>
+      ))}
+
+
+</Select>
 	  </Div>
 
 
@@ -204,7 +303,7 @@ const AddItemPage: React.FC = () => {
       {/* Select Image */}
       
       <Button variant="outlined" size="medium" sx={{ marginRight: '20px', marginBottom: '20px', marginTop: '-10px'  }} startIcon={<TbHandFinger />}
-      onClick={() => openWindow()}
+      onClick={() => openWindow("img")}
       >
        SELECT
     
@@ -256,13 +355,14 @@ const AddItemPage: React.FC = () => {
       <MenuItem value="" disabled>
     Select an account to send this to
   </MenuItem>
-  <MenuItem value="myAccount">My Account</MenuItem>
   
   {accountsToSendTo.map((account, index) => (
         <MenuItem key={index} value={account.name}>
           {account.name}
         </MenuItem>
       ))}
+
+<MenuItem value="myAccount">My account</MenuItem>
 
 
 </Select>

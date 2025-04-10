@@ -1,6 +1,6 @@
 // LandingPage.tsx
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ImageList from '@mui/material/ImageList';
 import ImageListItem from '@mui/material/ImageListItem';
 import ImageListItemBar from '@mui/material/ImageListItemBar';
@@ -15,6 +15,17 @@ import DynamicDialog from "../components/popup.tsx";
 import "../assets/landingPage.css"
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import { generateClient } from "aws-amplify/data";
+// @ts-ignore
+import type { Schema } from "../amplify/data/resource";
+import { useAuthenticator } from '@aws-amplify/ui-react'; //useAuthenticator,
+
+
+
+
+const client = generateClient<Schema>();
+
+
 
 const LandingPage: React.FC = () => {
   const theme = useTheme();
@@ -38,6 +49,29 @@ const LandingPage: React.FC = () => {
   'item3': 1,
 }
   */
+
+    const user = useAuthenticator();
+
+
+
+const [itemData, setItemData] = useState([]);
+
+useEffect(() => {
+
+  console.log("Ts pmo icl: ", client.models.Object)
+
+  const createObj = {}; 
+
+  /*
+  client.models.User.get({ id: user.user.userId }).then((userData) => {
+    //console.log("Word", userData)
+    console.log('test: ', userData.data);
+    if (!(userData.data)) {
+      client.models.User.create(createObj).then(() => {});
+    }
+  })
+  */
+}, []);
 
 
 
@@ -218,6 +252,7 @@ const [hover, setHover] = useState(false);
 
 
 
+/*
 const itemData = [
   {
     img: 'https://images.unsplash.com/photo-1551963831-b3b1ca40c98e',
@@ -225,11 +260,11 @@ const itemData = [
     author: '@bkristastucchio',
     name: "Jonkler",
     timeAndDate: "2025-02-04 16:02:15",
-    /*
-    rows: 2,
-    cols: 2,
-    featured: true,
-    */
+    
+    //rows: 2,
+    //cols: 2,
+    //featured: true,
+    
     quantityToBuy: 0,
   },
   {
@@ -318,7 +353,7 @@ const itemData = [
     timeAndDate: "2025-02-04 16:02:15",
   },  
 ];
-
+*/
 
 
 

@@ -101,6 +101,9 @@ client.models.User.get({ id: user.user.userId }).then((userData) => {
 })
 
 
+
+
+
   /*
   if (cognitoUser) {
     
