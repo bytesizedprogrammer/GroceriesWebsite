@@ -6,10 +6,11 @@ const initialAuth = {
 	status: 0, // 0: logged out  |  1: logged in as user | 2: Admin
 	email: "", // user email
 	userId: -1, // ID for this user, used for database referencing
-	isBanned: false, // whether you get to see your private details to edit, should be false upon login, only changed to true when you properly enter password in verifier
-	isTimedOut: false,
-	cartCount: 0, // self explanatory lolq
-	checked: false, // verifier so the API only runs once with correct userId being checked, good for everything including admin page keeping you there on refresh
+	name: "",
+	sentFriendRequests: [],
+	receivedFriendRequests: [],
+	stores: [],
+	//checked: false
 };
 
 // AuthContext and AuthDispatchContext
@@ -25,10 +26,11 @@ function authReducer(authState, action) {
 				status: action.auth.status,
 				email: action.auth.email,
 				userId: action.auth.userId,
-				isBanned: action.auth.isBanned,
-				isTimedOut: action.auth.isTimedOut,
-				cartCount: action.auth.cartCount,
-				checked: true,
+				name: action.auth.name,
+				sentFriendRequests: action.auth.sentFriendRequests,
+				receivedFriendRequests: action.auth.receivedFriendRequests,
+				stores: action.auth.stores
+				// checked: action.auth.checked
 			};
 		}
 		case "logout": {
@@ -40,12 +42,13 @@ function authReducer(authState, action) {
 				...action.auth,
 			};
 		}
+		/*
 		case "setChecked": {
 			return {
 				...authState,
 				checked: action.checked,
 			};
-		}
+		}*/
 		default: {
 			throw Error("Unknown action: " + action.type);
 		}
@@ -56,6 +59,12 @@ function authReducer(authState, action) {
 export function AuthProvider({ children }) {
 	const [authState, dispatch] = useReducer(authReducer, initialAuth);
 
+
+	useEffect(() => {
+		console.log("AuthState: ", authState);
+	}, [authState]);
+
+	/*
 	useEffect(() => {
 		dispatch({ type: "setChecked", checked: false });
 
@@ -109,7 +118,7 @@ export function AuthProvider({ children }) {
 			// If no token, directly set checked to true
 			dispatch({ type: "setChecked", checked: true });
 		}
-	}, []);
+	}, []);*/
 
 	return (
 		<AuthContext.Provider value={authState}>

@@ -49,7 +49,7 @@ const Navbar: React.FC = () => {
             <MenuItem onClick={() => handleClose("addItem")}>Add Item to List</MenuItem>
             <MenuItem onClick={() => handleClose("pairing")}>Pair Another User</MenuItem>
 
-            <MenuItem onClick={() => handleClose("test")}>Test Page</MenuItem>
+            <MenuItem onClick={() => handleClose("usersettings")}>User Settings</MenuItem>
             <MenuItem onClick={signOut}>Sign Out</MenuItem> {/* Added Sign Out */}
           </Menu>
         </Toolbar>

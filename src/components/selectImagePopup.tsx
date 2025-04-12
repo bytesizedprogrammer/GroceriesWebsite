@@ -98,11 +98,19 @@ const DynamicDialog: React.FC<DynamicDialogPropsTwo> = ({ value, open, onClose }
         <ClearIcon onClick={() => onClose()} />
       </div>
 
+      {value === "img" ? (
       <div className="mainContainer">
         <Typography variant="h3" sx={{ padding: 2 }}>
           Select an Image
         </Typography>
       </div>
+      ) : (
+        <div className="mainContainer">
+        <Typography variant="h3" sx={{ padding: 2 }}>
+          Add a store
+        </Typography>
+      </div>
+      )}
 
       {value === "img" ? (
         <div className="mainContainer">

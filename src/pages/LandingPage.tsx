@@ -1,6 +1,7 @@
+// @ts-nocheck
 // LandingPage.tsx
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import ImageList from '@mui/material/ImageList';
 import ImageListItem from '@mui/material/ImageListItem';
 import ImageListItemBar from '@mui/material/ImageListItemBar';
@@ -20,7 +21,8 @@ import { generateClient } from "aws-amplify/data";
 import type { Schema } from "../amplify/data/resource";
 import { useAuthenticator } from '@aws-amplify/ui-react'; //useAuthenticator,
 
-
+// @ts-ignore
+import { AuthContext } from "../context/AuthContext.jsx"
 
 
 const client = generateClient<Schema>();
@@ -40,7 +42,6 @@ const LandingPage: React.FC = () => {
   };
 
   // @ts-ignore
-  const [title, setTitle] = useState<string>("Walmart");
   const [votes, setVotes] = useState<{ [key: string]: number }>({});
   /*
   {
@@ -50,32 +51,17 @@ const LandingPage: React.FC = () => {
 }
   */
 
-    const user = useAuthenticator();
-
+    //const user = useAuthenticator();
 
 
 const [itemData, setItemData] = useState([]);
 
-useEffect(() => {
-
-  console.log("Ts pmo icl: ", client.models.Object)
-
-  const createObj = {}; 
-
-  /*
-  client.models.User.get({ id: user.user.userId }).then((userData) => {
-    //console.log("Word", userData)
-    console.log('test: ', userData.data);
-    if (!(userData.data)) {
-      client.models.User.create(createObj).then(() => {});
-    }
-  })
-  */
-}, []);
 
 
 
-const [hover, setHover] = useState(false);
+
+const [title, setTitle] = useState([]);
+const [clicked, setClicked] = useState([]);
 
 
   const handleVote = (key: string, delta: number) => {
@@ -120,35 +106,25 @@ const [hover, setHover] = useState(false);
 
 
 
+  const authContext = useContext(AuthContext);
+  useEffect(() => {
+    if (authContext) {
+      console.log("✅ AuthContext in Landing Page: ", authContext);
+    } else {
+      console.warn("❌ AuthContext is null or undefined.");
+    }
+  }, [authContext]);
+
   return (
     <>
     <div className='mainContainer'>
-
-    {/**
-     Final Structure will be when returned from backend:
-     - Everything []
-      - Stores []
-       - Object per store {}
-
-    [ [{}, {}, {}], [{}, {}], [{}], [] ]      ...etc.
-     */}
-
-    {/* Map here by store*/}
-    
-    
-    
-    
-    {/* cols={isSmallScreen ? 2 : isMediumScreen ? 3 : 4} // Adjust columns dynamically */}
-
-
         <ImageList 
           sx = {sxStyles}        
         >
       <ImageListItem key="Subheader" cols={2}>
         <ListSubheader 
-         onMouseEnter={() => setHover(true)}
-         onMouseLeave={() => setHover(false)}
-        className='Title' component="div">{title}      {hover ? <KeyboardArrowDownIcon /> : <KeyboardArrowUpIcon />}{/* ACCORDION: Add a little dropdown thingy so you can close the content of that store, add notification number to convey how many unique products are remaining to purchase */} </ListSubheader>
+
+        className='Title' component="div">  {title[0]}      {clicked[0] ? <KeyboardArrowDownIcon /> : <KeyboardArrowUpIcon />}{/* ACCORDION: Add a little dropdown thingy so you can close the content of that store, add notification number to convey how many unique products are remaining to purchase */} </ListSubheader>
         <DynamicDialog 
       selectedValue={selectedValue} 
       description={descriptionSetup}
@@ -198,162 +174,12 @@ const [hover, setHover] = useState(false);
       ))}
 
 
-
-
-{/*
-<ImageListItem sx={{ marginTop: '150px' }} key="Subheader" cols={2}>
-        <ListSubheader className='Title' component="div">ACME</ListSubheader>
-</ImageListItem>
-
-{itemData.map((item) => ( 
-        <ImageListItem key={item.img} >
-          <img
-            srcSet={`${item.img}?w=248&fit=crop&auto=format&dpr=2 2x`}
-            src={`${item.img}?w=248&fit=crop&auto=format`}
-            alt={item.title}
-            loading="lazy"
-            onClick={() => openWindow(item.img, item.title, "Walmart", "N/A", "N/A")}
-          />
-          <ImageListItemBar
-            title={item.title.length > 7 ? `${item.title.slice(0, 5)}...` : item.title}
-            actionIcon={
-              <div>
-<IconButton 
-            onClick={() => openWindow(item.img, item.title, "Walmart", item.name, item.timeAndDate)} 
-            sx={{ color: 'white' }}
-          >
-            <InfoIcon />
-          </IconButton>
-          
-
-              <IconButton onClick={() => handleVote(item.img, 1)} sx={{ color: 'white' }}>
-                    <ArrowUpwardIcon />
-                  </IconButton>
-                  <span style={{ color: 'white', margin: '0 0px' }}>
-                    {votes[item.img] || 0}
-                  </span>
-                  <IconButton onClick={() => handleVote(item.img, -1)} sx={{ color: 'white' }}>
-                    <ArrowDownwardIcon />
-                  </IconButton>
-                </div>
-              
-            }
-          />
-        </ImageListItem>
-      ))}
-*/}
-
     </ImageList>
     </div>
     </>
   );
 };
 
-
-
-
-/*
-const itemData = [
-  {
-    img: 'https://images.unsplash.com/photo-1551963831-b3b1ca40c98e',
-    title: 'Breakfast',
-    author: '@bkristastucchio',
-    name: "Jonkler",
-    timeAndDate: "2025-02-04 16:02:15",
-    
-    //rows: 2,
-    //cols: 2,
-    //featured: true,
-    
-    quantityToBuy: 0,
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d',
-    title: 'Burger',
-    author: '@rollelflex_graphy726',
-    name: "Jonkler",
-    timeAndDate: "2025-02-04 16:02:15",
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1522770179533-24471fcdba45',
-    title: 'Camera',
-    author: '@helloimnik',
-    name: "Jonkler",
-    timeAndDate: "2025-02-04 16:02:15",
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1444418776041-9c7e33cc5a9c',
-    title: 'Coffee',
-    author: '@nolanissac',
-    name: "Jonkler",
-    timeAndDate: "2025-02-04 16:02:15",
-    cols: 2,
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1533827432537-70133748f5c8',
-    title: 'Hats',
-    author: '@hjrc33',
-    name: "Jonkler",
-    timeAndDate: "2025-02-04 16:02:15",
-    cols: 2,
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62',
-    title: 'Honey',
-    author: '@arwinneil',
-    rows: 2,
-    cols: 2,
-    name: "Jonkler",
-    timeAndDate: "2025-02-04 16:02:15",
-    featured: true,
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1516802273409-68526ee1bdd6',
-    title: 'Basketball',
-    author: '@tjdragotta',
-    name: "Jonkler",
-    timeAndDate: "2025-02-04 16:02:15",
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1518756131217-31eb79b20e8f',
-    title: 'Fern',
-    author: '@katie_wasserman',
-    name: "Jonkler",
-    timeAndDate: "2025-02-04 16:02:15",
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1597645587822-e99fa5d45d25',
-    title: 'Mushrooms',
-    author: '@silverdalex',
-    name: "Jonkler",
-    timeAndDate: "2025-02-04 16:02:15",
-    rows: 2,
-    cols: 2,
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1567306301408-9b74779a11af',
-    title: 'Tomato basil',
-    author: '@shelleypauls',
-    name: "Jonkler",
-    timeAndDate: "2025-02-04 16:02:15",
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1471357674240-e1a485acb3e1',
-    title: 'Sea star',
-    author: '@peterlaster',
-    name: "Jonkler",
-    timeAndDate: "2025-02-04 16:02:15",
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1589118949245-7d38baf380d6',
-    title: 'Bike',
-    author: '@southside_customs',
-    cols: 2,
-    name: "Jonkler",
-    timeAndDate: "2025-02-04 16:02:15",
-  },  
-];
-*/
 
 
 

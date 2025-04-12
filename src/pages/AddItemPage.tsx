@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
-//import { Link } from 'react-router-dom';
+import React, { useEffect, useContext, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+// @ts-ignore
+import { AuthContext } from "../context/AuthContext.jsx"
 import { styled } from '@mui/material/styles';
 import { TextField }  from '@mui/material'; // ,InputAdornment, IconButton
 import Button from '@mui/material/Button';
@@ -49,11 +51,12 @@ const SubText = styled('h3')({
 
 
 
-// TS garbage for object strictness
+// TS interface for object strictness
 interface Account {
   name: string;
 }
 
+// test chars
 const accountsToSendTo: Account[] = [
   {
     name: "John Pork"
@@ -68,8 +71,7 @@ const accountsToSendTo: Account[] = [
 const AddItemPage: React.FC = () => {
   const [productName, setProductName] = useState<string>("");
   const [quantityOfProduct, setQuantityOfProduct] = useState<number>(1);
-  const [storeName, setStoreName] = useState<string>("");
-  const [selectedAccount, setSelectedAccount] = useState<string>("");
+  const [storeName, setStoreName] = useState<string>(""); // add to this
   const [open, setOpen] = useState(false);
 
     const [selectedImage, setSelectedImage] = useState<string>("");
@@ -77,32 +79,18 @@ const AddItemPage: React.FC = () => {
 
     const [storesToSendTo, setStoresToSendTo] = useState([]);
 
-  useEffect(() => {
-    console.log(`
-      VALUES:
-       - productName: ${productName}
-       - quantityOfProduct: ${quantityOfProduct} 
-       - storeName: ${storeName}
-       - selectedAccount: ${selectedAccount}
-    `);
-  }, [productName, quantityOfProduct, storeName, selectedAccount]);
+
+    const [storeID, setStoreID] = useState<string>("");
+
+  const navigate = useNavigate();
+  const authContext = useContext(AuthContext);
+
 
 
 
   const user = useAuthenticator();
 
-  useEffect(() => {  
-    /*
-    client.models.User.get({ id: user.user.userId }).then((userData) => {
-      //console.log("Word", userData)
-      console.log('test: ', userData.data);
-      if (!(userData.data)) {
-        client.models.User.create(createObj).then(() => {});
-      }
-    })
-    */
-  }, []);
-  
+
 
   const [popupType, setPopupType] = useState<string>("");
 
@@ -122,36 +110,80 @@ const AddItemPage: React.FC = () => {
       console.log("Received from Dialog:", img, title);
     }} else {
       // store handling
-      console.log(`img: ${img}`);
+      console.log(`img: ${img}
+        type: ${type}
+        title: ${title}  
+      `);
 
-      const obj = { storeName: img }
+        if (img == undefined || img == "" || img == "backdropClick") {
+          console.log("UNDEFINED")
+        } else {
+          const uuid = crypto.randomUUID();
 
+      const createObj = { 
+        id: uuid,
+        storeName: img,
+        // @ts-ignore
+        userID: authContext.userId
+      }
 
+     
       // have API create store
-        //client.models.Store
-
-
-      /* 
-      fetch newest object created assuming create worked
-
-      this sets it to list of store names 
-      and setsstorename to new one
-      
+      client.models.Store.create(createObj).then(() => {
       // @ts-ignore
-      setStoresToSendTo([...storesToSendTo, obj]);
+      setStoresToSendTo([...storesToSendTo, createObj]);
       setStoreName(img);
-      */
+      });         
+    }
+
+      
+      
+      
     }
   }
 
-  
-  const authContext = { userID: "54182438-10a1-70ec-b8c7-4b7ddd628241" }
-  // first needs auth context before i can do this actually
+
   useEffect(() => {
-    client.models.User.get({ id: authContext.userID }).then((userData) => {
-      console.log("USERDATA FETCHED FOR SAKE OF ADD NEW ITEM: ", userData)
-    });
-  }, []);
+    const fetchStore = async () => {
+      // @ts-ignore
+      console.log("AUTH: ", authContext.userId);
+  
+      try {
+        // @ts-ignore
+        const res = await client.models.Store.list({
+          filter: {
+            userID: {
+              // @ts-ignore
+              eq: authContext.userId
+            }
+          }
+        });
+  
+        // @ts-ignore
+        const storeData = res?.[0] ?? null;
+        console.log("Store Data:", storeData);
+        console.log("Res: ", res);
+
+
+
+
+        // add on: 
+          //setStoresToSendTo(prev => [...prev, ...res.data]);
+
+        // replaces
+        // @ts-ignore
+        setStoresToSendTo(res.data);
+
+      } catch (err) {
+        console.error("Error fetching store:", err);
+      }
+    };
+  
+
+    // @ts-ignore
+    if (client && authContext?.userId) fetchStore();
+  }, [client, authContext]);
+  
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]; // Get the first selected file
@@ -172,38 +204,44 @@ const AddItemPage: React.FC = () => {
     e.preventDefault(); 
 
     const uuid = crypto.randomUUID();
-
-
-    console.log("Ts pmo icl sybau: ", client.models.Object)
   
+    
+    // time, date
+    const dataForWhoAddedAndWhen = "2025-04-12T18:48:36.649Z";
 
     const createObj = {
       id: uuid,
+      storeID: storeID,
+      objectName: productName,
+      //objectImage: selectedImage,
+      //datetimeObjectWasAdded: ,
+      objectImage: "image",
+      datetimeObjectWasAdded: dataForWhoAddedAndWhen,
+      quantityOfProduct: quantityOfProduct
     };
 
-    /*
-    console.log('Product Name:', productName);
-    console.log('Quantity:', quantityOfProduct);
-    console.log('Store Name: ', storeName);
+    
+    console.log('Obj:', createObj);
+   
 
-    // Reset the form fields after submission
-    setProductName('');
-    setQuantityOfProduct(0);
-    setStoreName('');
-    setSelectedAccount('');
-    setSelectedImage('');
-    setSelectedImageTitle('');
-    */
+try {
+    client.models.Object.create(createObj).then(() => { 
+      //window.location.reload();
+ // Reset the form fields after submission
+ setProductName('');
+ setQuantityOfProduct(0);
+ setStoreName('');
+ setSelectedImage('');
+ setSelectedImageTitle('');
+
+    }); 
+  } catch (err) {
+    console.error("Error with creating object: ", err);
+  }
+   
+    
   }
 
-/*
-  useEffect(async() => {
-    const { data: items } = await client.models.Item.list({
-      select: ["productName", "quantity", "store"],
-    });
-    console.log(items); // Returns only requested fields
-  }, [])
-  */
   
   
   return (
@@ -258,24 +296,20 @@ const AddItemPage: React.FC = () => {
     {/* Make conditional to do either new store or dropdown of stores you've already done */}
 	  <Div>
 
-      {/*
-      <TextField
-        label="Store"
-        variant="outlined"
-        fullWidth
-        margin="normal"
-		
-    sx={{ width: '80%' }} // if big screen, make 60% insetad of 80%
-		value={storeName}
-		onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStoreName(String(e.target.value))}
-      />
-      */}
-
+ 
       <Select displayEmpty sx={{ width: '80%' }}
         value={storeName}
 
         // @ts-ignore
-        onChange={(e: SelectChangeEvent<string>) => setStoreName(e.target.value)}
+        onChange={(e: SelectChangeEvent<string>) => {
+          const selectedStoreName = e.target.value;
+          const selectedStore = storesToSendTo.find(store => store.storeName === selectedStoreName);
+
+    setStoreName(selectedStoreName);
+    if (selectedStore) {
+      setStoreID(selectedStore.id);
+    }
+        }}
         >
       <MenuItem value="" disabled>
     Select a store to put this in
@@ -344,29 +378,7 @@ const AddItemPage: React.FC = () => {
     </Div>
     </>
     )}
-    <Div>
-      {/* Which Account to send to? */}
-      <Select displayEmpty sx={{ width: '80%' }}
-        value={selectedAccount}
-
-        // @ts-ignore
-        onChange={(e: SelectChangeEvent<string>) => setSelectedAccount(e.target.value)}
-        >
-      <MenuItem value="" disabled>
-    Select an account to send this to
-  </MenuItem>
-  
-  {accountsToSendTo.map((account, index) => (
-        <MenuItem key={index} value={account.name}>
-          {account.name}
-        </MenuItem>
-      ))}
-
-<MenuItem value="myAccount">My account</MenuItem>
-
-
-</Select>
-	  </Div>
+   
       
 	  <Div>
       <Button
