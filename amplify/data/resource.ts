@@ -46,7 +46,7 @@ const schema = a.schema({
     quantityOfProduct: a.integer(),
     addedByWhichUserID: a.belongsTo('Store', 'storeID'), // this should be switched to be a userID like it actually should be, body should be for storeID
   })
-  .authorization(allow => [allow.owner()]),
+  .authorization(allow => [allow.publicApiKey()]),
 
 });
 export type Schema = ClientSchema<typeof schema>;

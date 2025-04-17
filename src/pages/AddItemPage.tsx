@@ -209,6 +209,9 @@ const AddItemPage: React.FC = () => {
   };
 
 
+  useEffect(() => {
+  }, [client])
+
   // Adds an item
   const submitForm = async (e: React.FormEvent) => {
     e.preventDefault(); 
@@ -245,7 +248,7 @@ const AddItemPage: React.FC = () => {
     const createObj = {
       //storeID: { id: storeID },  // Wrapping storeID in an object
 
-      addedByWhichUserID: storeID,
+      storeID: storeID,
 
       /*
       objectName: productName || null,  // Handle optional fields
@@ -258,7 +261,9 @@ const AddItemPage: React.FC = () => {
 
 
     console.log('Obj:', createObj);
-   
+    console.log("PLEASE GET ME INFO: ", client.models)
+
+
 
 try {
     client.models.Storeobject.create(createObj).then((res) => { 
