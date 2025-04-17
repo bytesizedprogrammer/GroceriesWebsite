@@ -33,7 +33,7 @@ const schema = a.schema({
     //id: a.id().required(), // 
     userID: a.id().required(), // onCreation
     storeName: a.string(), // onCreation
-    objects: a.hasMany('Object', 'storeID'), // update
+    objects: a.hasMany('Storeobject', 'storeID'), // update
     forWhoseAccount: a.belongsTo('User', 'userID'), // onCreation
   })
   .authorization((allow) => [allow.publicApiKey()]),
