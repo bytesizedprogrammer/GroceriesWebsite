@@ -2,21 +2,21 @@ import React, { useEffect, useContext, useState } from 'react';
 import { styled } from '@mui/material/styles';
 import { TextField, Dialog, DialogTitle, DialogContent, DialogActions }  from '@mui/material'; // ,InputAdornment, IconButton
 import Button from '@mui/material/Button';
-import { Select, MenuItem } from "@mui/material";
+//import { Select, MenuItem } from "@mui/material";
 import { generateClient } from "aws-amplify/data";
 //@ts-ignore
 import type { Schema } from "../amplify/data/resource";
-import { useAuthenticator } from '@aws-amplify/ui-react'; //useAuthenticator,
+//import { useAuthenticator } from '@aws-amplify/ui-react'; //useAuthenticator,
 
 // @ts-ignore
 import { AuthContext } from "../context/AuthContext.jsx"
-import { AuthenticationDetails } from 'amazon-cognito-identity-js';
+//import { AuthenticationDetails } from 'amazon-cognito-identity-js';
 
 
 
 const client = generateClient<Schema>();
 
-
+/*
 const VisuallyHiddenInput = styled('input')({
     clip: 'rect(0 0 0 0)',
     clipPath: 'inset(50%)',
@@ -28,7 +28,7 @@ const VisuallyHiddenInput = styled('input')({
     whiteSpace: 'nowrap',
     width: 1,
   });
-  
+*/  
   const Div = styled('div')({
     display: "flex",
     justifyContent: "center",
@@ -39,11 +39,12 @@ const VisuallyHiddenInput = styled('input')({
   
   })
   
+  /*
   const SubText = styled('h3')({
     fontWeight: '300', // or do 400
     fontStyle: 'italic'
   })
-
+*/
   
   /*
   interface Auth {
@@ -69,7 +70,7 @@ interface Auth {
   */
 
 const UserSettings: React.FC = () => {
-    const user = useAuthenticator();
+    //const user = useAuthenticator();
 
     const [email, setEmail] = useState<string>("");
     const [name, setName] = useState<string>("");

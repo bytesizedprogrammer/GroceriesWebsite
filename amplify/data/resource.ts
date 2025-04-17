@@ -38,13 +38,13 @@ const schema = a.schema({
   })
   .authorization((allow) => [allow.publicApiKey()]),
 
-  Object: a.model({ // Good to go
+  Storeobject: a.model({ // Good to go
     storeID: a.id().required(), // objectID
     objectName: a.string(),
     objectImage: a.string(),
     datetimeObjectWasAdded: a.datetime(),
     quantityOfProduct: a.integer(),
-    addedByWhichUserID: a.belongsTo('Store', 'storeID'),
+    addedByWhichUserID: a.belongsTo('Store', 'storeID'), // this should be switched to be a userID like it actually should be, body should be for storeID
   })
   .authorization(allow => [allow.owner()]),
 

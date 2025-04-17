@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+//import { useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { AuthContext } from "../context/AuthContext.jsx"
 import { styled } from '@mui/material/styles';
@@ -15,7 +15,10 @@ import Popup from "../components/selectImagePopup.tsx";
 import { generateClient } from "aws-amplify/data";
 // @ts-ignore
 import type { Schema } from "../amplify/data/resource";
-import { useAuthenticator } from '@aws-amplify/ui-react'; //useAuthenticator,
+//import { useAuthenticator } from '@aws-amplify/ui-react'; //useAuthenticator,
+
+
+
 
 
 const client = generateClient<Schema>();
@@ -52,11 +55,13 @@ const SubText = styled('h3')({
 
 
 // TS interface for object strictness
+/*
 interface Account {
   name: string;
 }
-
+*/
 // test chars
+/*
 const accountsToSendTo: Account[] = [
   {
     name: "John Pork"
@@ -65,7 +70,12 @@ const accountsToSendTo: Account[] = [
     name: 'Jonkler'
   }
 ];
-
+*/
+interface Store {
+  id: string;
+  storeName: string;
+  // Add any other fields your store object might have
+}
 
 
 const AddItemPage: React.FC = () => {
@@ -77,18 +87,18 @@ const AddItemPage: React.FC = () => {
     const [selectedImage, setSelectedImage] = useState<string>("");
     const [selectedImageTitle, setSelectedImageTitle] = useState<string>("");
 
-    const [storesToSendTo, setStoresToSendTo] = useState([]);
+    const [storesToSendTo, setStoresToSendTo] = useState<Store[]>([]);
 
 
     const [storeID, setStoreID] = useState<string>("");
 
-  const navigate = useNavigate();
+ // const navigate = useNavigate();
   const authContext = useContext(AuthContext);
 
 
 
 
-  const user = useAuthenticator();
+ // const user = useAuthenticator();
 
 
 
@@ -203,29 +213,55 @@ const AddItemPage: React.FC = () => {
   const submitForm = async (e: React.FormEvent) => {
     e.preventDefault(); 
 
-    const uuid = crypto.randomUUID();
+   // const uuid = crypto.randomUUID();
   
     
     // time, date
-    const dataForWhoAddedAndWhen = "2025-04-12T18:48:36.649Z";
+  //  const dataForWhoAddedAndWhen = "2025-04-12T18:48:36.649Z";
 
+    /*
     const createObj = {
-      id: uuid,
+      //id: uuid,
       storeID: storeID,
       objectName: productName,
       //objectImage: selectedImage,
       //datetimeObjectWasAdded: ,
       objectImage: "image",
-      datetimeObjectWasAdded: dataForWhoAddedAndWhen,
-      quantityOfProduct: quantityOfProduct
-    };
+      //datetimeObjectWasAdded: dataForWhoAddedAndWhen,
+      quantityOfProduct: quantityOfProduct,
+      //addedByWhichUserID: storeID
 
-    
+      /*
+      addedByWhichUserID: {
+        connect: {
+          id: storeID
+        }
+      }
+      
+    };
+    */
+    //console.log("Keys: ", Object.keys(client.models.Object.schema));
+
+    const createObj = {
+      //storeID: { id: storeID },  // Wrapping storeID in an object
+
+      addedByWhichUserID: storeID,
+
+      /*
+      objectName: productName || null,  // Handle optional fields
+  objectImage: 'image' || null,     // Handle optional fields
+  storeID: storeID || null,         // Handle optional fields
+  quantityOfProduct: quantityOfProduct || null,  // Handle optional fields
+  datetimeObjectWasAdded: dataForWhoAddedAndWhen || null // Handle optional fields
+  */
+    }
+
+
     console.log('Obj:', createObj);
    
 
 try {
-    client.models.Object.create(createObj).then(() => { 
+    client.models.Storeobject.create(createObj).then((res) => { 
       //window.location.reload();
  // Reset the form fields after submission
  setProductName('');
@@ -233,13 +269,48 @@ try {
  setStoreName('');
  setSelectedImage('');
  setSelectedImageTitle('');
+ console.log("Successfully created object.");
+    console.log("✅ Created object successfully:", res);
 
-    }); 
+    }).catch(err => {
+      console.error("Error with creating object (in .catch):", err);
+    });
+  
   } catch (err) {
     console.error("Error with creating object: ", err);
   }
-   
-    
+
+
+console.log("Created Object we're submitting: ", createObj);
+
+
+/*
+try {
+  const result = await client.models.Object.create(createObj);
+  console.log("Created object:", result);
+
+  // Reset the form fields
+  setProductName('');
+  setQuantityOfProduct(0);
+  setStoreName('');
+  setSelectedImage('');
+  setSelectedImageTitle('');
+} catch (err) {
+  console.error("Error with creating object (in try/catch):", err);
+}
+*/
+
+/*
+client.models.Object.create({ input: createObj })
+  .then((res) => {
+    console.log("✅ Created object successfully:", res);
+    console.log(client.models.Object);
+
+  })
+  .catch((err) => {
+    console.error("❌ Error creating object:", err);
+  });
+*/
   }
 
   
@@ -319,7 +390,9 @@ try {
   <MenuItem value="myStore"  onClick={() => openWindow("")}>Add new store</MenuItem>
    
   {storesToSendTo.map((store, index) => (
+    // @ts-ignore
         <MenuItem key={index} value={store.storeName}>
+         {/* // @ts-ignore */}
           {store.storeName}
         </MenuItem>
       ))}
