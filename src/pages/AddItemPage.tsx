@@ -18,6 +18,8 @@ import type { Schema } from "../amplify/data/resource";
 //import { useAuthenticator } from '@aws-amplify/ui-react'; //useAuthenticator,
 
 
+import { FileUploader } from '@aws-amplify/ui-react-storage';
+import { ConsoleLogger } from 'aws-amplify/utils';
 
 
 
@@ -88,6 +90,7 @@ const AddItemPage: React.FC = () => {
     const [selectedImageTitle, setSelectedImageTitle] = useState<string>("");
 
     const [storesToSendTo, setStoresToSendTo] = useState<Store[]>([]);
+    const [otherUsersStores, setOtherUsersStores] = useState<Store[]>([]);
 
 
     const [storeID, setStoreID] = useState<string>("");
@@ -119,7 +122,7 @@ const AddItemPage: React.FC = () => {
       setSelectedImageTitle(title);
       console.log("Received from Dialog:", img, title);
     }} else {
-      // store handling
+      // store creation handling
       console.log(`img: ${img}
         type: ${type}
         title: ${title}  
@@ -181,9 +184,11 @@ const AddItemPage: React.FC = () => {
           //setStoresToSendTo(prev => [...prev, ...res.data]);
 
         // replaces
+
+        
         // @ts-ignore
         setStoresToSendTo(res.data);
-
+      
       } catch (err) {
         console.error("Error fetching store:", err);
       }
@@ -192,8 +197,105 @@ const AddItemPage: React.FC = () => {
 
     // @ts-ignore
     if (client && authContext?.userId) fetchStore();
+
+
+
+
+    // Fetch friends, then fetch their stores:
+    const fetchFriends = async () => {
+      const res = await client.models.FriendsList.list({
+        filter: {
+          or: [
+            {
+              userID: {
+                // @ts-ignore
+                eq: authContext.userId
+              }
+            },
+            {
+              userID2: {
+                // @ts-ignore
+                eq: authContext.userId
+              }
+            }
+          ]
+        }
+      });
+
+       // @ts-ignore
+       const idkhomie = res.data
+       console.log("Fetch Amigos: ", idkhomie);
+
+       // step 1: filter out non-friends (aka only accept status of accepted)
+       const acceptedFriends = idkhomie.filter(
+        (friend: any) => friend.statusOfRequest === "ACCEPTED"
+      );
+    
+      console.log("Accepted Amigos: ", acceptedFriends);
+    
+
+       // take userIDs and filter out yours:
+       // @ts-ignore
+       const filteredDataPtOne = acceptedFriends.filter(item => item.userID !== authContext.userId);
+       const idListPartOne = filteredDataPtOne.map(item => item.userID);
+
+
+       // take userID2s and filter out yours:
+       // @ts-ignore
+       const filteredDataPtTwo = acceptedFriends.filter(item => item.userID2 !== authContext.userId); // filter to remove all instances in res.data in js where userID2 == authContext.userId
+       const idListPartTwo = filteredDataPtTwo.map(item => item.userID2);
+
+       console.log("ID LIST PART ONE: ", idListPartOne);
+       console.log("ID LIST PART TWO: ", idListPartTwo);
+
+      //console.log("Filtered Data Part One: ", filteredDataPtOne);
+      //console.log("Filtered Data Part Two: ", filteredDataPtTwo);
+
+
+       // COMBO 2 arrays of friends into one
+       const tempData = idListPartOne.concat(idListPartTwo); // gives you a single array with all objects from both arrays
+       const combinedData = [...new Set(tempData)];
+       console.log("Combined Data: ", combinedData);
+
+        // @ts-ignore
+        let arr = []; 
+
+       // now take friendIDs specifically and fetch all "store" objects that are theirs and SET to setOtherUsersStores
+        for (let i = 0; i < combinedData.length; i++) {
+          console.log("Dont Test Me! ", combinedData[i])
+
+
+          // take the store content here below, but WE NEED TO ADD name from "acceptedAmigos" that matches the correct ID so that when we render everything we can have the name of the profile's owner to indicate whose store you'd put it in.
+
+          const res = await client.models.Store.list({
+            filter: {
+              userID: {
+                // @ts-ignore
+                eq: combinedData[i]
+              }
+            }
+          });
+          console.log("PLS WORK ASASSDADSAD: ", res);
+
+          // res is the data back
+          // @ts-ignore
+          arr = arr.concat(res.data); 
+        }
+
+
+        // @ts-ignore
+        setOtherUsersStores(arr);
+    }
+
+
+
+    // @ts-ignore
+    if (client && authContext?.userId) fetchFriends();
   }, [client, authContext]);
   
+  useEffect(() => {
+    console.log("TS DONT PMO ICL SYBAU SKIBIDIRIZZLER: ", otherUsersStores);
+  }, [otherUsersStores])
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]; // Get the first selected file
@@ -398,10 +500,17 @@ client.models.Object.create({ input: createObj })
     // @ts-ignore
         <MenuItem key={index} value={store.storeName}>
          {/* // @ts-ignore */}
-          {store.storeName}
+          {store.storeName} [You]
         </MenuItem>
       ))}
 
+
+  {otherUsersStores.map((store, index) => (
+     // @ts-ignore
+     <MenuItem key={index} value={store.storeName}>
+      {store.storeName} {/*[{store.personName}]*/}
+    </MenuItem>
+  ))}
 
 </Select>
 	  </Div>

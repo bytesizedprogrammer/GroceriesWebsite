@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 //import { Link } from 'react-router-dom';
 import { styled } from '@mui/material/styles';
 import { Stack } from "@mui/material"; // Typography, Button, Dialog
@@ -19,6 +19,16 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import Paper from '@mui/material/Paper';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
+
+// @ts-ignore
+import { AuthContext } from "../context/AuthContext.jsx"
+
+import { generateClient } from "aws-amplify/data";
+// @ts-ignore
+import type { Schema } from "../amplify/data/resource";
+
+const client = generateClient<Schema>();
+
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: '#fff',
@@ -70,53 +80,221 @@ const SubText = styled('h3')({
 const PairingPage: React.FC = () => {
 // TS garbage for object strictness
 interface AccountStuff {
-  email: string;
+  createdAt: string;
+  id: string;
+  otherUserName: string;
+  statusOfRequest: string;
+  updatedAt: string;
+  userID: string;
+  userID2: string;
+  userIDOne: any;
+  userIDTwo: any;
 }
 
-// sample data in place of API
-const accountsSyncedTo: AccountStuff[] = [
-{
-  email: 'email@email.com'
-},
-{
-  email: 'test@test.com'
-},
-{
-  email: 'other@other.com'
-},
-]
 
-
-const outGoingRequestsA: AccountStuff[] = [
-{
-  email: 'email@email.com'
-},
-{
-  email: 'test@test.com'
-},
-{
-  email: 'other@other.com'
-},
-]
-
-const incomingRequests: AccountStuff[] = [
-{
-  email: 'email@email.com'
-},
-{
-  email: 'test@test.com'
-},
-{
-  email: 'other@other.com'
-},
-]
-
+const authContext = useContext(AuthContext);
 
   const [alignment, setAlignment] = useState<string>('Pair Accounts');
 
   // @ts-ignore
-  const [pairKeyPrivate, setPairKeyPrivate] = useState<string>('fakePairKey');
-  const [enterKey, setEnterKey] = useState<string>("");
+  const [pairKeyPrivate, setPairKeyPrivate] = useState<string>('');
+  const [enterKey, setEnterKey] = useState<string>(""); // 84182438-a0c1-7093-4d36-02724f0160f0   efstathiosplakas@gmail.com
+
+  const [incomingRequests, setIncomingRequests] = useState<AccountStuff[]>([]);
+  const [outGoingRequests, setOutGoingRequests] = useState<AccountStuff[]>([]);
+  const [accountsSyncedToPartOne, setAccountsSynctedToPartOne] = useState<AccountStuff[]>([]);
+  const [accountsSyncedToPartTwo, setAccountsSynctedToPartTwo] = useState<AccountStuff[]>([]);
+
+  const [gotRejectedBy, setGotRejectedBy] = useState<AccountStuff[]>([]); // outgoing
+  const [rejectedPeople, setRejectedPeople] = useState<AccountStuff[]>([]); // incoming
+
+
+  useEffect(() => {
+    // @ts-ignore
+    setPairKeyPrivate(authContext.userId);
+  }, [authContext]);
+
+  
+
+  const [fetchedData, setFetchedData] = useState(false);
+
+  useEffect(() => {
+    console.log(client.models.FriendsList);
+  }, [client, authContext]);
+
+  useEffect(() => {
+    /*
+    const fetchUserName = async (id: string) => {
+      try {
+//        const userRes = await client.models.Users.get({ id });
+await client.models.User.get({ id }).then(userRes => {
+  console.log("uh")
+
+  // @ts-ignore
+  console.log("Copemaxxing: ", userRes.data.name);
+
+    // @ts-ignore
+    return userRes.data.name?.trim() ? userRes.data.name : "Unknown User";
+});
+
+
+      
+      } catch (err) {
+        console.error("Error fetching user name:", err);
+        return "Unknown User";
+      }
+    };
+    */
+
+    const fetchUserName = async (id: string) => {
+      try {
+        const userRes = await client.models.User.get({ id });
+        // @ts-ignore
+        console.log("Copemaxxing: ", userRes.data.name);
+    
+        // @ts-ignore
+        return userRes.data.name?.trim() ? userRes.data.name : "Unknown User";
+      } catch (err) {
+        console.error("Error fetching user name:", err);
+        return "Unknown User";
+      }
+    };
+    
+
+    const fetchOutgoingRequests = async() => {
+      try {
+        const res = await client.models.FriendsList.list({
+          filter: {
+            userID: {
+              // @ts-ignore
+              eq: authContext.userId
+            }
+          }
+        });
+
+        const enricheda = await Promise.all(
+          res.data.map(async (request) => {
+            const otherUserId = request.userID2;
+            console.log(`PLEASEEEE: ${JSON.stringify(request)}`)
+            const name = await fetchUserName(otherUserId);
+            console.log("NAME: ", name);
+            return { ...request, otherUserName: name };
+          })
+        );
+
+
+        //console.log("Test outgoing: ", res.data);
+        
+
+        const friendrequests = enricheda.filter(req => req.statusOfRequest === "PENDING");
+        const friends = enricheda.filter(req => req.statusOfRequest === "ACCEPTED");
+        const rejections = enricheda.filter(req => req.statusOfRequest !== "PENDING" && req.statusOfRequest !== "ACCEPTED");
+
+        console.log("Fetch Outgoing: ", enricheda);
+
+        // @ts-ignore
+        setOutGoingRequests(friendrequests); // pending outgoing
+        // @ts-ignore
+        setAccountsSynctedToPartTwo(friends); // friends
+        console.log("Outgoing friends: ", friends);
+        // @ts-ignore
+        setGotRejectedBy(rejections); // rejected
+
+
+      } catch (err) {
+        console.error("Error with fetchOutgoingRequests: ", err);
+      }
+    }
+
+
+    const fetchIncomingRequests = async() => {
+      try {
+        const res = await client.models.FriendsList.list({
+          filter: {
+            userID2: {
+              // @ts-ignore
+              eq: authContext.userId
+            }
+          }
+        });
+
+        
+        const enriched = await Promise.all(
+          res.data.map(async (request) => {
+            const otherUserId = request.userID;
+            const name = await fetchUserName(otherUserId);
+            console.log(`NAMEEE: ${name}`);
+            return { ...request, otherUserName: name };
+          })
+        );
+
+        const friendrequests = enriched.filter(req => req.statusOfRequest === "PENDING");
+        const friends = enriched.filter(req => req.statusOfRequest === "ACCEPTED");
+        const rejections = enriched.filter(req => req.statusOfRequest !== "PENDING" && req.statusOfRequest !== "ACCEPTED");
+
+        console.log("Fetch Incoming Requests: ", enriched);
+
+        // @ts-ignore
+        setIncomingRequests(friendrequests); // pending incoming
+        // @ts-ignore
+        setAccountsSynctedToPartOne(friends); // friends
+        console.log("Incoming friends: ", friends);
+        // @ts-ignore
+        setRejectedPeople(rejections); // rejections
+        
+
+        /*
+        const enriched = Promise.all(
+          res.data.map((request) => {
+            const otherUserId = request.userID;
+            return fetchUserName(otherUserId).then((name) => {
+              console.log("NAME: ", name);
+
+              return { ...request, otherUserName: name };
+            });
+          })
+        ).then((enriched) => {
+          const friendrequests = enriched.filter(req => req.statusOfRequest === "PENDING");
+          const friends = enriched.filter(req => req.statusOfRequest === "ACCEPTED");
+          const rejections = enriched.filter(req => req.statusOfRequest !== "PENDING" && req.statusOfRequest !== "ACCEPTED");
+        
+          console.log("Fetch Incoming Requests: ", enriched);
+        
+          // @ts-ignore
+          setIncomingRequests(friendrequests); // pending incoming
+          // @ts-ignore
+          setAccountsSynctedToPartOne(friends); // friends
+          console.log("Incoming friends: ", friends);
+          console.log("Incoming retard test: ", enriched);
+          // @ts-ignore
+          setRejectedPeople([...rejectedPeople, rejections]); // rejections
+        });
+        */
+      } catch (err) {
+        console.error("Error with fetchIncomingRequests: ", err);
+      }
+    }
+    /*
+const res = await client.models.Store.list({
+          filter: {
+            userID: {
+              // @ts-ignore
+              eq: authContext.userId
+            }
+          }
+        });
+    */
+
+  // @ts-ignore
+  if (client && authContext?.userId && fetchedData == false) { 
+    fetchIncomingRequests();
+    fetchOutgoingRequests();
+    //setFetchedData(true);
+    console.log("get mogged")
+  }
+  }, [client, authContext])
+
+
 
   const handleChange = (
     // @ts-ignore
@@ -127,6 +305,8 @@ const incomingRequests: AccountStuff[] = [
       setAlignment(newAlignment);
     }
   };
+
+
 
 
   
@@ -145,19 +325,63 @@ const handleMouseUpPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
 
 //const [userEmail, setUserEmail] = useState<string>("email@email.com");
 
-const [outGoingRequests, setOutGoingRequests] = useState<AccountStuff[]>(outGoingRequestsA);
 
-// to convert a string into AccountStuff since
-function createAccountStuff(email: string): AccountStuff { // : AccountStuff This specifies that the function must return an AccountStuff object.
-  return { email }; // essentially equivalent to JSON.stringify body of "email": email
+useEffect(() => {
+  console.log(`Ts pmo icl sybau: ${JSON.stringify(accountsSyncedToPartOne)}`);
+}, [accountsSyncedToPartOne])
+
+
+// @ts-ignore
+const handleFriendRequest = async(status, id) => {
+  console.log("Status: ", status);
+  console.log("ID in db: ", id);
+
+  client.models.FriendsList.update({ id: id, statusOfRequest: status }).then((res) => { 
+    console.log("✅ Updated FRIENDLIST successfully:", res);
+  }).catch(err => {
+    console.error("Error with handleFriendRequest: ", err)
+  })
+}
+
+// @ts-ignore
+const handleDeleteFriend = async(id) => {
+//  console.log("This one is for tren baby: ", id)
+    // @ts-ignore
+   client.models.FriendsList.delete({ id: id }).then((res) => { console.log("Success"); window.location.reload()  }).catch(err => { console.error("Error with deleting friend moment: ", err) })
 }
 
 
-const sendRequest =  (/*newRequest: string*/) => {
+const sendRequest =  async(/*newRequest: string*/) => {
     //let newAccount = createAccountStuff(newRequest);
-    let newAccount = createAccountStuff(enterKey);
+    
+    const createObj = {
+      // @ts-ignore
+      userID: authContext.userId,
+      userID2: enterKey,
+      statusOfRequest: "PENDING"
+    }
+    // enterKey
+
+
+    try {
+    client.models.FriendsList.create(createObj).then((res) => { 
+      console.log("✅ Created FRIENDLIST successfully:", res);
     setEnterKey("");
-    setOutGoingRequests((prevRequests) => [...prevRequests, newAccount]);  
+
+
+    // refresh window
+
+
+
+
+    // @ts-ignore
+   //setOutGoingRequests((prevRequests) => [...prevRequests, newAccount]);
+    }).catch(err => {
+      console.error("Error with response for creating friendslist: ", err);
+    })  
+  } catch (err) {
+    console.error("Error calling client.models.FriendsList.create: ", err);
+  }
 }  
 
   return (
@@ -176,6 +400,7 @@ const sendRequest =  (/*newRequest: string*/) => {
       <ToggleButton value="Pair Accounts">Pair</ToggleButton>
       <ToggleButton value="Pending Requests">Requests</ToggleButton>
       <ToggleButton value="View who you're paired with">View</ToggleButton>
+      <ToggleButton value="View rejections">Rejections</ToggleButton>
     </ToggleButtonGroup>
 
     {/*
@@ -278,13 +503,13 @@ const sendRequest =  (/*newRequest: string*/) => {
           <Div sx={{ width: '90%' }}>
           <Grid container spacing={3} sx={{ p: 2 }}>
         <Grid>
-          <Item sx={{ height: '45px' }}>{user.email}</Item>
+          <Item sx={{ height: '45px' }}>{user.otherUserName}</Item>
         </Grid>
         <Grid >
-          <Item><CheckIcon/></Item>
+          <Item><CheckIcon onClick={() => handleFriendRequest("ACCEPTED", user.id)}/></Item>
         </Grid>
         <Grid >
-          <Item><ClearIcon/></Item>
+          <Item><ClearIcon onClick={() => handleFriendRequest("REJECTED", user.id)}/></Item>
         </Grid>
       </Grid>
           </Div>
@@ -301,7 +526,7 @@ const sendRequest =  (/*newRequest: string*/) => {
               
               {outGoingRequests.map((user) => (
               <Grid >
-                <Item>{user.email}</Item>
+                <Item>{user.otherUserName}</Item>
               </Grid>
               ))}
               
@@ -310,7 +535,94 @@ const sendRequest =  (/*newRequest: string*/) => {
       </Div>
 )}
 
+{alignment === "View rejections" && (
+  <Div>
 
+    {/* Incoming Rejections */}
+    <h1>People who rejected you</h1>
+    {gotRejectedBy.map((account) => (
+       <SpecialDiv key={account.id}>
+       {/* left div here, 80% width, contains input */}
+       
+         <Div>
+         <TextField
+                 //label="Store"
+                 variant="outlined"
+                 fullWidth
+                 margin="normal"
+                 value={account.otherUserName}
+                 disabled
+                 
+                 sx={{ width: '80%' }} // if big screen, make 60% insetad of 80%
+                 InputProps={{
+                   sx: { input: { textAlign: 'center' } }, // Center the text inside the TextField
+               }}
+                 //   sx={{ width: { xs: '80%', md: '60%' } }} // 80% on small screens, 60% on big screens
+                 
+             //onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStoreName(String(e.target.value))}
+               />
+               
+
+               
+               </Div>
+       {/* right div here, 20% width, contains trash icon */}
+      
+     </SpecialDiv>
+    ))}
+
+{/* Out going rejections */}
+<h1>People you've rejected</h1>
+    
+    {rejectedPeople.map((account) => (
+       <SpecialDiv key={account.id}>
+       {/* left div here, 80% width, contains input */}
+       <LeftDiv>
+         <Div>
+         <TextField
+                 //label="Store"
+                 variant="outlined"
+                 fullWidth
+                 margin="normal"
+                 value={account.otherUserName}
+                 disabled
+                 
+                 sx={{ width: '80%' }} // if big screen, make 60% insetad of 80%
+                 InputProps={{
+                   sx: { input: { textAlign: 'center' } }, // Center the text inside the TextField
+               }}
+                 //   sx={{ width: { xs: '80%', md: '60%' } }} // 80% on small screens, 60% on big screens
+                 
+             //onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStoreName(String(e.target.value))}
+               />
+               
+
+               
+               </Div>
+       </LeftDiv>
+       {/* right div here, 20% width, contains trash icon */}
+       <RightDiv>
+         <DeleteIcon 
+                     onClick={() => handleDeleteFriend(account.id)}
+
+         // for hover affect 
+         /*
+         function updateClassById(id, newClass) {
+ items.forEach(item => {
+     if (item.id === id) {
+         item.class = newClass;
+     }
+ });
+       }
+         */
+
+
+         //sx={{ fontSize: 'large' }} // make me bigger pls
+         />
+       </RightDiv>
+     </SpecialDiv>
+    ))}
+  </Div>
+)} {/* gotRejectedBy */}
 
 
 {alignment === "View who you're paired with" && (
@@ -318,8 +630,8 @@ const sendRequest =  (/*newRequest: string*/) => {
         {/* Render view-specific content here */}
         
 
-        {accountsSyncedTo.map((account) => (
-        <SpecialDiv>
+        {accountsSyncedToPartOne.map((account) => (
+        <SpecialDiv key={account.id}>
           {/* left div here, 80% width, contains input */}
           <LeftDiv>
             <Div>
@@ -328,7 +640,7 @@ const sendRequest =  (/*newRequest: string*/) => {
                     variant="outlined"
                     fullWidth
                     margin="normal"
-                    value={account.email}
+                    value={account.otherUserName}
                     disabled
                     
                     sx={{ width: '80%' }} // if big screen, make 60% insetad of 80%
@@ -340,11 +652,15 @@ const sendRequest =  (/*newRequest: string*/) => {
                 //onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStoreName(String(e.target.value))}
                   />
                   
+
+                  
                   </Div>
           </LeftDiv>
           {/* right div here, 20% width, contains trash icon */}
           <RightDiv>
-            <DeleteIcon 
+            <DeleteIcon             
+            onClick={() => handleDeleteFriend(account.id)}
+
             // for hover affect 
             /*
             function updateClassById(id, newClass) {
@@ -363,6 +679,61 @@ const sendRequest =  (/*newRequest: string*/) => {
         </SpecialDiv>
     ))}
 
+
+
+
+
+
+
+
+
+{accountsSyncedToPartTwo.map((account) => (
+        <SpecialDiv key={account.id}>
+          {/* left div here, 80% width, contains input */}
+          <LeftDiv>
+            <Div>
+            <TextField
+                    //label="Store"
+                    variant="outlined"
+                    fullWidth
+                    margin="normal"
+                    value={account.otherUserName}
+                    disabled
+                    
+                    sx={{ width: '80%' }} // if big screen, make 60% insetad of 80%
+                    InputProps={{
+                      sx: { input: { textAlign: 'center' } }, // Center the text inside the TextField
+                  }}
+                    //   sx={{ width: { xs: '80%', md: '60%' } }} // 80% on small screens, 60% on big screens
+                    
+                //onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStoreName(String(e.target.value))}
+                  />
+                  
+
+                  
+                  </Div>
+          </LeftDiv>
+          {/* right div here, 20% width, contains trash icon */}
+          <RightDiv>
+            <DeleteIcon 
+            onClick={() => handleDeleteFriend(account.id)}
+            // for hover affect 
+            /*
+            function updateClassById(id, newClass) {
+    items.forEach(item => {
+        if (item.id === id) {
+            item.class = newClass;
+        }
+    });
+          }
+            */
+
+
+            //sx={{ fontSize: 'large' }} // make me bigger pls
+            />
+          </RightDiv>
+        </SpecialDiv>
+    ))}
         
 
       </Div>

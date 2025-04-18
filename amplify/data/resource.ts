@@ -23,6 +23,8 @@ const schema = a.schema({
   FriendsList: a.model({
     userID: a.id(),
     userID2: a.id(),
+    //nameOfPersonBehindUserID: a.string(),
+    //nameOfPersonBehindUserID2: a.string(),
     userIDOne: a.belongsTo('User', 'userID'), // userIDOne in FriendsList points to userID in User
     userIDTwo: a.belongsTo('User', 'userID2'), // userIDTwo in FriendsList points to userID in User
     statusOfRequest: a.enum(['PENDING', 'ACCEPTED', 'REJECTED']),
@@ -44,7 +46,7 @@ const schema = a.schema({
     objectImage: a.string(),
     datetimeObjectWasAdded: a.datetime(),
     quantityOfProduct: a.integer(),
-    addedByWhichUserID: a.belongsTo('Store', 'storeID'), // this should be switched to be a userID like it actually should be, body should be for storeID
+    addedByWhichUserID: a.belongsTo('Store', 'storeID'), // this should be renamed.  Copy same concept over to who added this.  AKA userID required and whichUserIsIt (this line btw is a function behind the scenes that does fetching)
   })
   .authorization(allow => [allow.publicApiKey()]),
 
