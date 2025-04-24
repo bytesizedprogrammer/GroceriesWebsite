@@ -17,9 +17,10 @@ import { generateClient } from "aws-amplify/data";
 import type { Schema } from "../amplify/data/resource";
 //import { useAuthenticator } from '@aws-amplify/ui-react'; //useAuthenticator,
 
-
+// @ts-ignore
 import { FileUploader } from '@aws-amplify/ui-react-storage';
-import { ConsoleLogger } from 'aws-amplify/utils';
+
+//import { ConsoleLogger } from 'aws-amplify/utils';
 
 
 
@@ -104,7 +105,6 @@ const AddItemPage: React.FC = () => {
  // const user = useAuthenticator();
 
 
-
   const [popupType, setPopupType] = useState<string>("");
 
   const openWindow = (type: string) => {
@@ -112,6 +112,7 @@ const AddItemPage: React.FC = () => {
     setOpen(true); // open the popup
   };
   
+  const [refreshIfNeeded, setRefreshIfNeeded] = useState(false);
 
   const handleClose = (type: string, img: string, title: string) => {
     setOpen(false);
@@ -120,6 +121,7 @@ const AddItemPage: React.FC = () => {
     if (img) {
       setSelectedImage(img); // Store received data
       setSelectedImageTitle(title);
+      setUploadFilename(img);
       console.log("Received from Dialog:", img, title);
     }} else {
       // store creation handling
@@ -297,6 +299,7 @@ const AddItemPage: React.FC = () => {
     console.log("TS DONT PMO ICL SYBAU SKIBIDIRIZZLER: ", otherUsersStores);
   }, [otherUsersStores])
 
+  
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]; // Get the first selected file
     if (file) {
@@ -314,15 +317,28 @@ const AddItemPage: React.FC = () => {
   useEffect(() => {
   }, [client])
 
+
   // Adds an item
   const submitForm = async (e: React.FormEvent) => {
     e.preventDefault(); 
 
    // const uuid = crypto.randomUUID();
-  
-    
+
     // time, date
   //  const dataForWhoAddedAndWhen = "2025-04-12T18:48:36.649Z";
+    
+  /*
+  if (!uploadFileName) {
+      alert("Please select an image.");
+      return;
+    }
+
+    const imageUrl = await uploadImageToS3(uploadFileName);
+    if (!imageUrl) {
+      alert("Image upload failed.");
+      return;
+    }
+    */
 
     /*
     const createObj = {
@@ -347,12 +363,19 @@ const AddItemPage: React.FC = () => {
     */
     //console.log("Keys: ", Object.keys(client.models.Object.schema));
 
+
+    const dataForWhoAddedAndWhen = new Date().toISOString();
     const createObj = {
       //storeID: { id: storeID },  // Wrapping storeID in an object
 
       storeID: storeID,
-
-      /*
+      objectName: productName || null,  // Handle optional fields
+  objectImage: uploadFileName || null, 
+  quantityOfProduct: quantityOfProduct || null,  // Handle optional fields
+  datetimeObjectWasAdded: dataForWhoAddedAndWhen || null
+   
+  
+  /*
       objectName: productName || null,  // Handle optional fields
   objectImage: 'image' || null,     // Handle optional fields
   storeID: storeID || null,         // Handle optional fields
@@ -365,7 +388,7 @@ const AddItemPage: React.FC = () => {
     console.log('Obj:', createObj);
     console.log("PLEASE GET ME INFO: ", client.models)
 
-
+// good, js on pause for onw
 
 try {
     client.models.Storeobject.create(createObj).then((res) => { 
@@ -389,6 +412,20 @@ try {
 
 
 console.log("Created Object we're submitting: ", createObj);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /*
@@ -420,7 +457,50 @@ client.models.Object.create({ input: createObj })
 */
   }
 
+
+  const processFile = (key: string, file: File, userId: string) => {
+    console.log("processFile - Key:", key);
+    console.log("File Key:", key);
+
+    console.log("File Data Full: ", file);
+
+  console.log("File Name:", file.name);
+  console.log("File Type:", file.type);
+  console.log("File Size:", file.size);
+  if (!file || !key || !userId) {
+    console.warn("Missing required data in processFile");
+    return null;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    setSelectedImage(reader.result as string); // Set the file content as Base64
+  };
+  reader.readAsDataURL(file);
+
+  return {
+    key: `${userId}-${key}`,
+    file,
+  };
+  };
+
+  const handleUpload = async (key: string, file: File, userId: string) => {
+    const processed = processFile(key, file, userId);
   
+    if (!processed) {
+      console.error("Failed to process file before upload.");
+      return;
+    }
+  
+    try {
+     // await uploadFile(processed); // assuming this matches Amplify format: { key, file }
+      console.log("Upload successful!");
+    } catch (err) {
+      console.error("Upload failed:", err);
+    }
+  };
+  
+  const [inputEl, setInputEl] = useState(null);
+  const [uploadFileName, setUploadFilename] = useState(null);
   
   return (
     <>
@@ -524,12 +604,27 @@ client.models.Object.create({ input: createObj })
       {/* Select Image */}
       
       <Button variant="outlined" size="medium" sx={{ marginRight: '20px', marginBottom: '20px', marginTop: '-10px'  }} startIcon={<TbHandFinger />}
-      onClick={() => openWindow("img")}
+      //onClick={() => openWindow("img")}
+      
+      onClick={() => {
+        if (refreshIfNeeded === true) {
+          // add localstorage stuff to hold data so it gets auto filled upon refresh
+
+          window.location.reload();
+        } else {
+          // Do something else or nothing
+          openWindow("img");
+        }
+      }}
       >
        SELECT
     
        
         </Button>
+
+
+
+
 
         <Button 
         component="label"
@@ -542,16 +637,66 @@ client.models.Object.create({ input: createObj })
         //size="medium" 
         sx={{ marginLeft: '20px', marginBottom: '20px', marginTop: '-10px' }}
         
+
+        onClick={() => inputEl?.click()}
         >
           UPLOAD
 
+<div
+style={{ display: 'none' }}
+>
+
+
+          <FileUploader
+  sx={{ display: 'none !important' }} // forcefully ensures it's hidden
+
+  acceptedFileTypes={['image/*']}
+  path="pictures/"
+  maxFileCount={1}
+  isResumable
+
+
+  /*
+  // @ts-ignore
+  processFile={({ key, file }) => processFile(key, file, userId)}
+  // @ts-ignore
+  onUploadSuccess={({ key }) => { key ? setUploadFilename(key) : null}}
+  */
+  ref={(ref) => {
+    // Access internal <input type="file" /> and trigger it
+    if (ref?.inputElement) setInputEl(ref.inputElement);
+  }}
+  // @ts-ignore
+  processFile={({ key, file }) => { 
+    setRefreshIfNeeded(true);
+    processFile(key, file, authContext.userId)
+    setSelectedImageTitle(key)
+    console.log(`Key fr: ${key}`);
+  }}
+  // @ts-ignore
+  /*
+  onUploadSuccess={({ key }) => {
+    key && setUploadFilename(key)
+    setSelectedImageTitle(key)
+    alert("PLS")
+  }}
+  */
+  onUploadSuccess={({ key }) => key ? setUploadFilename(key): null}
+
+  variation="drop" // hides default UI
+/>
+  
+</div>
+
+
+          {/*
           <VisuallyHiddenInput
     type="file"
     //accept="image/*"
     accept=".jpg,.jpeg,.png,.webp" // .gif
     onChange={handleImageChange}
     //multiple
-          />
+          />*/}
         </Button>
 	  </Div>
 

@@ -24,6 +24,7 @@ import { useAuthenticator } from '@aws-amplify/ui-react'; //useAuthenticator,
 // @ts-ignore
 import { AuthContext } from "../context/AuthContext.jsx"
 
+import { getUrl } from 'aws-amplify/storage';
 
 const client = generateClient<Schema>();
 
