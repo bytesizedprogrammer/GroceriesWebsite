@@ -1,0 +1,82 @@
+ <Button 
+        component="label"
+        role={undefined}
+        variant="outlined"
+        tabIndex={-1}
+        startIcon={<CloudUploadIcon />}
+ 
+        //variant="outlined" 
+        //size="medium" 
+        sx={{ marginLeft: '20px', marginBottom: '20px', marginTop: '-10px' }}
+        
+
+        onClick={() => inputEl?.click()}
+        >
+          UPLOAD
+
+<div
+style={{ display: 'none' }}
+>
+
+
+          <FileUploader
+  sx={{ display: 'none !important' }} // forcefully ensures it's hidden
+
+  acceptedFileTypes={['image/*']}
+  path="pictures/"
+  maxFileCount={1}
+  isResumable
+
+
+  /*
+  // @ts-ignore
+  processFile={({ key, file }) => processFile(key, file, userId)}
+  // @ts-ignore
+  onUploadSuccess={({ key }) => { key ? setUploadFilename(key) : null}}
+  */
+  ref={(ref) => {
+    // Access internal <input type="file" /> and trigger it
+    if (ref?.inputElement) setInputEl(ref.inputElement);
+  }}
+  // @ts-ignore
+  processFile={({ key, file }) => { 
+    setRefreshIfNeeded(true);
+    processFile(key, file, authContext.userId)
+    setSelectedImageTitle(key)
+    console.log(`Key fr: ${key}`);
+  }}
+  // @ts-ignore
+  /*
+  onUploadSuccess={({ key }) => {
+    key && setUploadFilename(key)
+    setSelectedImageTitle(key)
+    alert("PLS")
+  }}
+  */
+  onUploadSuccess={({ key }) => {
+    console.log(`VERIFY RETARD!!!`)
+    key ? setUploadFilename(key): null
+  }}
+
+  variation="drop" // hides default UI
+/>
+  
+</div>
+
+
+          {/*
+          <VisuallyHiddenInput
+    type="file"
+    //accept="image/*"
+    accept=".jpg,.jpeg,.png,.webp" // .gif
+    onChange={handleImageChange}
+    //multiple
+          />*/}
+        </Button>
+
+
+
+
+
+
+https://claude.ai/chat/623a2ef5-6a6b-40d7-8fed-431b7f1e5c26

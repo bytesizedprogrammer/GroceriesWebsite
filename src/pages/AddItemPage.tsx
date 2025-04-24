@@ -82,6 +82,9 @@ interface Store {
 
 
 const AddItemPage: React.FC = () => {
+  const [uploadFileName, setUploadFilename] = useState(null);
+
+
   const [productName, setProductName] = useState<string>("");
   const [quantityOfProduct, setQuantityOfProduct] = useState<number>(1);
   const [storeName, setStoreName] = useState<string>(""); // add to this
@@ -296,7 +299,7 @@ const AddItemPage: React.FC = () => {
   }, [client, authContext]);
   
   useEffect(() => {
-    console.log("TS DONT PMO ICL SYBAU SKIBIDIRIZZLER: ", otherUsersStores);
+    console.log("TS: ", otherUsersStores);
   }, [otherUsersStores])
 
   
@@ -457,6 +460,9 @@ client.models.Object.create({ input: createObj })
 */
   }
 
+  useEffect(() => {
+    console.log("Upload File Name Data: ", uploadFileName);
+  }, [uploadFileName]);
 
   const processFile = (key: string, file: File, userId: string) => {
     console.log("processFile - Key:", key);
@@ -500,7 +506,6 @@ client.models.Object.create({ input: createObj })
   };
   
   const [inputEl, setInputEl] = useState(null);
-  const [uploadFileName, setUploadFilename] = useState(null);
   
   return (
     <>
@@ -624,80 +629,58 @@ client.models.Object.create({ input: createObj })
 
 
 
+      {/** here.bak was here originally */}
+      // Replace your current FileUploader implementation with this:
 
-
-        <Button 
-        component="label"
-        role={undefined}
-        variant="outlined"
-        tabIndex={-1}
-        startIcon={<CloudUploadIcon />}
- 
-        //variant="outlined" 
-        //size="medium" 
-        sx={{ marginLeft: '20px', marginBottom: '20px', marginTop: '-10px' }}
-        
-
-        onClick={() => inputEl?.click()}
-        >
-          UPLOAD
-
-<div
-style={{ display: 'none' }}
+<Button 
+  component="label"
+  role={undefined}
+  variant="outlined"
+  tabIndex={-1}
+  startIcon={<CloudUploadIcon />}
+  sx={{ marginLeft: '20px', marginBottom: '20px', marginTop: '-10px' }}
 >
-
-
-          <FileUploader
-  sx={{ display: 'none !important' }} // forcefully ensures it's hidden
-
-  acceptedFileTypes={['image/*']}
-  path="pictures/"
-  maxFileCount={1}
-  isResumable
-
-
-  /*
-  // @ts-ignore
-  processFile={({ key, file }) => processFile(key, file, userId)}
-  // @ts-ignore
-  onUploadSuccess={({ key }) => { key ? setUploadFilename(key) : null}}
-  */
-  ref={(ref) => {
-    // Access internal <input type="file" /> and trigger it
-    if (ref?.inputElement) setInputEl(ref.inputElement);
-  }}
-  // @ts-ignore
-  processFile={({ key, file }) => { 
-    setRefreshIfNeeded(true);
-    processFile(key, file, authContext.userId)
-    setSelectedImageTitle(key)
-    console.log(`Key fr: ${key}`);
-  }}
-  // @ts-ignore
-  /*
-  onUploadSuccess={({ key }) => {
-    key && setUploadFilename(key)
-    setSelectedImageTitle(key)
-    alert("PLS")
-  }}
-  */
-  onUploadSuccess={({ key }) => key ? setUploadFilename(key): null}
-
-  variation="drop" // hides default UI
-/>
+  UPLOAD
   
-</div>
-
-
-          {/*
-          <VisuallyHiddenInput
-    type="file"
-    //accept="image/*"
-    accept=".jpg,.jpeg,.png,.webp" // .gif
-    onChange={handleImageChange}
-    //multiple
-          />*/}
-        </Button>
+  {/* Use a wrapper with visibility:hidden instead of display:none */}
+  <div style={{ visibility: 'hidden', position: 'absolute', width: '1px', height: '1px', overflow: 'hidden' }}>
+    <FileUploader
+      acceptedFileTypes={['image/*']}
+      path="pictures/"
+      maxFileCount={1}
+      isResumable
+      ref={(ref) => {
+        // Access internal <input type="file" /> and trigger it
+        if (ref?.inputElement) setInputEl(ref.inputElement);
+      }}
+      processFile={({ key, file }) => { 
+        console.log("Processing file with key:", key);
+        setRefreshIfNeeded(true);
+        setSelectedImageTitle(file.name);
+        
+        // Return the processed file data
+        // @ts-ignore
+        return {
+          key: `${authContext.userId}-${key}`,
+          file,
+        };
+      }}
+      onUploadSuccess={({ key }) => {
+        console.log("Upload success with key:", key);
+        if (key) {
+          setUploadFilename(key);
+          // You might want to create and set a URL for the image here
+          // to display the uploaded image in your UI
+        }
+      }}
+      onUploadError={(error) => {
+        console.error("Upload error:", error);
+      }}
+      variation="drop" // hides default UI
+    />
+  </div>
+</Button>
+       
 	  </Div>
 
     {(selectedImageTitle != '' && selectedImageTitle != 'backdropClick' && selectedImageTitle != 'escapeKeyDown') && ( // prevents bug that makes it so when you press these keys/do these actions it makes the img become the key/action
