@@ -413,14 +413,17 @@ const AddItemPage: React.FC = () => {
 
       storeID: storeID,
       objectName: productName || null,  // Handle optional fields
-  objectImage: uploadFileName || null, 
-  quantityOfProduct: quantityOfProduct || null,  // Handle optional fields
-  datetimeObjectWasAdded: dataForWhoAddedAndWhen || null
+      objectImage: uploadFileName || null, 
+      quantityOfProduct: quantityOfProduct || null,  // Handle optional fields
+      datetimeObjectWasAdded: dataForWhoAddedAndWhen || null,
    
-  // wasImagePresetOrUploaded: presetOrUploaded
+      wasImagePresetOrUploaded: presetOrUploaded,
 
-
-  /*
+      // @ts-ignore
+      userID: authContext.userId
+  
+  
+    /*
       objectName: productName || null,  // Handle optional fields
   objectImage: 'image' || null,     // Handle optional fields
   storeID: storeID || null,         // Handle optional fields
@@ -514,7 +517,7 @@ client.models.Object.create({ input: createObj })
   reader.readAsDataURL(file);
   setPresetOrUploaded("uploaded")
   };
-
+ 
   
   const [inputEl, setInputEl] = useState(null);
   
