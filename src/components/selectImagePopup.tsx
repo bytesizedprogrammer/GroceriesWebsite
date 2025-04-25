@@ -156,7 +156,7 @@ const DynamicDialog: React.FC<DynamicDialogPropsTwo> = ({ value, open, onClose }
   onChange={(e) => setStoreName(e.target.value)} 
 />
 
-          <button onClick={() => handleStoreSelection()}> ASD </button>
+          <button onClick={() => handleStoreSelection()}> Submit </button>
         </div>
       )}
     </Dialog>

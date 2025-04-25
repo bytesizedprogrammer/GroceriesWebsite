@@ -26,7 +26,7 @@ import { FileUploader } from '@aws-amplify/ui-react-storage';
 
 const client = generateClient<Schema>();
 
-
+/*
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
   clipPath: 'inset(50%)',
@@ -38,7 +38,7 @@ const VisuallyHiddenInput = styled('input')({
   whiteSpace: 'nowrap',
   width: 1,
 });
-
+*/
 const Div = styled('div')({
   display: "flex",
   justifyContent: "center",
@@ -77,7 +77,7 @@ const accountsToSendTo: Account[] = [
 interface Store {
   id: string;
   storeName: string;
-  // Add any other fields your store object might have
+  userName: string;
 }
 
 
@@ -115,6 +115,12 @@ const AddItemPage: React.FC = () => {
     setOpen(true); // open the popup
   };
   
+  const [presetOrUploaded, setPresetOrUploaded] = useState("");
+
+  useEffect(() => {
+    console.log("as");
+  }, [presetOrUploaded]);
+
   const [refreshIfNeeded, setRefreshIfNeeded] = useState(false);
 
   const handleClose = (type: string, img: string, title: string) => {
@@ -124,7 +130,11 @@ const AddItemPage: React.FC = () => {
     if (img) {
       setSelectedImage(img); // Store received data
       setSelectedImageTitle(title);
+
+      // @ts-ignore
       setUploadFilename(img);
+      setRefreshIfNeeded(true);
+      setPresetOrUploaded("preset");
       console.log("Received from Dialog:", img, title);
     }} else {
       // store creation handling
@@ -133,7 +143,7 @@ const AddItemPage: React.FC = () => {
         title: ${title}  
       `);
 
-        if (img == undefined || img == "" || img == "backdropClick") {
+        if (img == undefined || img == "" || img.toLowerCase() == "escapekeydown" || img == "backdropClick") {
           console.log("UNDEFINED")
         } else {
           const uuid = crypto.randomUUID();
@@ -266,6 +276,8 @@ const AddItemPage: React.FC = () => {
         let arr = []; 
 
        // now take friendIDs specifically and fetch all "store" objects that are theirs and SET to setOtherUsersStores
+        
+       /* OLD CODE, good but lacks names
         for (let i = 0; i < combinedData.length; i++) {
           console.log("Dont Test Me! ", combinedData[i])
 
@@ -286,7 +298,48 @@ const AddItemPage: React.FC = () => {
           // @ts-ignore
           arr = arr.concat(res.data); 
         }
+        */
+        for (let i = 0; i < combinedData.length; i++) {
+          console.log("Dont Test Me! ", combinedData[i]);
+        
+          // Fetch the user's store
+          const res = await client.models.Store.list({
+            filter: {
+              userID: {
+                // @ts-ignore
+                eq: combinedData[i]
+              }
+            }
+          });
+        
+          console.log("PLS WORK ASASSDADSAD: ", res);
+        
+        
+          // Fetch the user's name from the Users model
+          const user = await client.models.User.get({
+            // @ts-ignore
+            id: combinedData[i]
+          });
+        
+          // @ts-ignore
+          console.log("CHECK USER DATA: ", user.data.name);
 
+          // @ts-ignore
+          const userName = user?.data.name && user.data.name.trim() !== "" ? user.data.name : "Unknown User";
+        
+          // Add the username to each store item
+          const storesWithNames = res.data.map((store: any) => ({
+            ...store,
+            userName: userName
+          }));
+          
+          console.log(`Stores With Names: ${JSON.stringify(storesWithNames)}`);
+          
+          // Add to the final array
+          // @ts-ignore
+          arr = arr.concat(storesWithNames);
+        
+        }
 
         // @ts-ignore
         setOtherUsersStores(arr);
@@ -303,22 +356,9 @@ const AddItemPage: React.FC = () => {
   }, [otherUsersStores])
 
   
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]; // Get the first selected file
-    if (file) {
-      setSelectedImageTitle(file.name); // Set the file name
-  
-      const reader = new FileReader();
-      reader.onload = () => {
-        setSelectedImage(reader.result as string); // Set the file content as Base64
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
 
-  useEffect(() => {
-  }, [client])
+
 
 
   // Adds an item
@@ -377,7 +417,9 @@ const AddItemPage: React.FC = () => {
   quantityOfProduct: quantityOfProduct || null,  // Handle optional fields
   datetimeObjectWasAdded: dataForWhoAddedAndWhen || null
    
-  
+  // wasImagePresetOrUploaded: presetOrUploaded
+
+
   /*
       objectName: productName || null,  // Handle optional fields
   objectImage: 'image' || null,     // Handle optional fields
@@ -464,49 +506,22 @@ client.models.Object.create({ input: createObj })
     console.log("Upload File Name Data: ", uploadFileName);
   }, [uploadFileName]);
 
-  const processFile = (key: string, file: File, userId: string) => {
-    console.log("processFile - Key:", key);
-    console.log("File Key:", key);
-
-    console.log("File Data Full: ", file);
-
-  console.log("File Name:", file.name);
-  console.log("File Type:", file.type);
-  console.log("File Size:", file.size);
-  if (!file || !key || !userId) {
-    console.warn("Missing required data in processFile");
-    return null;
-  }
+  const processFile = (file: File) => {
   const reader = new FileReader();
   reader.onload = () => {
     setSelectedImage(reader.result as string); // Set the file content as Base64
   };
   reader.readAsDataURL(file);
-
-  return {
-    key: `${userId}-${key}`,
-    file,
-  };
+  setPresetOrUploaded("uploaded")
   };
 
-  const handleUpload = async (key: string, file: File, userId: string) => {
-    const processed = processFile(key, file, userId);
-  
-    if (!processed) {
-      console.error("Failed to process file before upload.");
-      return;
-    }
-  
-    try {
-     // await uploadFile(processed); // assuming this matches Amplify format: { key, file }
-      console.log("Upload successful!");
-    } catch (err) {
-      console.error("Upload failed:", err);
-    }
-  };
   
   const [inputEl, setInputEl] = useState(null);
   
+  useEffect(() => {
+    console.log("InputEL: ", inputEl)
+  }, [inputEl]);
+
   return (
     <>
     <Div>
@@ -593,7 +608,7 @@ client.models.Object.create({ input: createObj })
   {otherUsersStores.map((store, index) => (
      // @ts-ignore
      <MenuItem key={index} value={store.storeName}>
-      {store.storeName} {/*[{store.personName}]*/}
+      {store.storeName} [{store.userName}]
     </MenuItem>
   ))}
 
@@ -630,7 +645,6 @@ client.models.Object.create({ input: createObj })
 
 
       {/** here.bak was here originally */}
-      // Replace your current FileUploader implementation with this:
 
 <Button 
   component="label"
@@ -651,16 +665,19 @@ client.models.Object.create({ input: createObj })
       isResumable
       ref={(ref) => {
         // Access internal <input type="file" /> and trigger it
+        
+        // @ts-ignore
         if (ref?.inputElement) setInputEl(ref.inputElement);
       }}
       processFile={({ key, file }) => { 
         console.log("Processing file with key:", key);
         setRefreshIfNeeded(true);
         setSelectedImageTitle(file.name);
-        
+        processFile(file)
         // Return the processed file data
         // @ts-ignore
         return {
+          // @ts-ignore
           key: `${authContext.userId}-${key}`,
           file,
         };
@@ -668,6 +685,7 @@ client.models.Object.create({ input: createObj })
       onUploadSuccess={({ key }) => {
         console.log("Upload success with key:", key);
         if (key) {
+          // @ts-ignore
           setUploadFilename(key);
           // You might want to create and set a URL for the image here
           // to display the uploaded image in your UI
@@ -676,6 +694,7 @@ client.models.Object.create({ input: createObj })
       onUploadError={(error) => {
         console.error("Upload error:", error);
       }}
+      // @ts-ignore
       variation="drop" // hides default UI
     />
   </div>

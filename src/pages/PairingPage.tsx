@@ -116,8 +116,6 @@ const authContext = useContext(AuthContext);
 
   
 
-  const [fetchedData, setFetchedData] = useState(false);
-
   useEffect(() => {
     console.log(client.models.FriendsList);
   }, [client, authContext]);
@@ -286,10 +284,9 @@ const res = await client.models.Store.list({
     */
 
   // @ts-ignore
-  if (client && authContext?.userId && fetchedData == false) { 
+  if (client && authContext?.userId) { 
     fetchIncomingRequests();
     fetchOutgoingRequests();
-    //setFetchedData(true);
     console.log("get mogged")
   }
   }, [client, authContext])
