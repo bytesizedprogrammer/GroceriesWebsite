@@ -46,13 +46,16 @@ const schema = a.schema({
     objectImage: a.string(),
     datetimeObjectWasAdded: a.datetime(),
     quantityOfProduct: a.integer(),
+
+ // Actual userID stuff:
+ userID: a.id(),
+ userIDOfPersonWhoAddedObject: a.belongsTo('User', 'userID'),
+
+ wasImagePresetOrUploaded: a.enum(['preset', 'uploaded']),
+
     addedByWhichUserID: a.belongsTo('Store', 'storeID'), // this should be renamed.  Copy same concept over to who added this.  AKA userID required and whichUserIsIt (this line btw is a function behind the scenes that does fetching)
 
-    // Actual userID stuff:
-    userID: a.id(),
-    userIDOfPersonWhoAddedObject: a.belongsTo('User', 'userID'),
-
-    wasImagePresetOrUploaded: a.enum(['preset', 'uploaded']),
+   
   })
   .authorization(allow => [allow.publicApiKey()]),
 
