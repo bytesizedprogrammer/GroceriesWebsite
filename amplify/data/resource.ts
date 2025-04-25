@@ -16,7 +16,9 @@ const schema = a.schema({
       name: a.string(),
       sentFriendRequests: a.hasMany('FriendsList', 'userID'), // This points to userIDOne in FriendsList
       receivedFriendRequests: a.hasMany('FriendsList', 'userID2'), // This points to userIDTwo in FriendsList
-      stores: a.hasMany('Store', 'userID') // if userID fails, just try doing id as a backup
+      stores: a.hasMany('Store', 'userID'), // if userID fails, just try doing id as a backup
+      storeObjects: a.hasMany('Storeobject', 'userID') // if userID fails, just try doing id as a backup
+
     })
     .authorization((allow) => [allow.publicApiKey()]),
 
@@ -47,15 +49,13 @@ const schema = a.schema({
     datetimeObjectWasAdded: a.datetime(),
     quantityOfProduct: a.integer(),
 
- // Actual userID stuff:
- userID: a.id(),
- userIDOfPersonWhoAddedObject: a.belongsTo('User', 'userID'),
+    // Actual userID stuff:
+    userID: a.id(),
+    userIDOfPersonWhoAddedObject: a.belongsTo('User', 'userID'),
 
- wasImagePresetOrUploaded: a.enum(['preset', 'uploaded']),
+    wasImagePresetOrUploaded: a.enum(['preset', 'uploaded']),
 
     addedByWhichUserID: a.belongsTo('Store', 'storeID'), // this should be renamed.  Copy same concept over to who added this.  AKA userID required and whichUserIsIt (this line btw is a function behind the scenes that does fetching)
-
-   
   })
   .authorization(allow => [allow.publicApiKey()]),
 
