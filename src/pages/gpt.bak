@@ -1,0 +1,10 @@
+{myStoreItems.map((storeArray, idx) => (
+        <div key={idx}>
+          <h2>{storeArray[0]}</h2>
+          <ul>
+            {storeArray.slice(1).map((item, i) => (
+              <li key={i}>{JSON.stringify(item)}</li>
+            ))}
+          </ul>
+        </div>
+      ))}

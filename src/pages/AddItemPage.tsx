@@ -525,6 +525,54 @@ client.models.Object.create({ input: createObj })
     console.log("InputEL: ", inputEl)
   }, [inputEl]);
 
+  /*
+  useEffect(() => {
+    const handleVersionUpdate = (data: any) => {
+      console.log(`Data: ${JSON.stringify(data)}`)
+      setVersion((prevVersion) => prevVersion + 1);
+
+      // @ts-ignore
+      if (data.userID === authContext.userId) {
+        // Only update version if the userID matches
+        // @ts-ignore
+        setVersion((prevVersion) => prevVersion + 1);
+      }
+    };
+
+    // Subscribe to store object creation events
+    // @ts-ignore
+    const createSub = client.models.Storeobject.onCreate().subscribe({
+      next: handleVersionUpdate,
+      // @ts-ignore
+      error: (error) => console.warn(error),
+    });
+
+    // Subscribe to store object update events
+    // @ts-ignore
+    const updateSub = client.models.Storeobject.onUpdate().subscribe({
+      next: handleVersionUpdate,
+      // @ts-ignore
+      error: (error) => console.warn(error),
+    });
+
+    // Subscribe to store object deletion events
+    // @ts-ignore
+    const deleteSub = client.models.Storeobject.onDelete().subscribe({
+      next: handleVersionUpdate,
+      // @ts-ignore
+      error: (error) => console.warn(error),
+    });
+
+    // Cleanup on unmount
+    return () => {
+      createSub.unsubscribe();
+      updateSub.unsubscribe();
+      deleteSub.unsubscribe();
+    };
+  }, []);
+
+  */
+
   return (
     <>
     <Div>
@@ -578,44 +626,52 @@ client.models.Object.create({ input: createObj })
 	  <Div>
 
  
-      <Select displayEmpty sx={{ width: '80%' }}
-        value={storeName}
+    <Select
+  displayEmpty
+  sx={{ width: '80%' }}
+  value={storeName}
+  // @ts-ignore
+  onChange={(e: SelectChangeEvent<string>) => {
+    const selectedStoreName = e.target.value;
+    
+    // Find the selected store in storesToSendTo first
+    const selectedStore = storesToSendTo.find(store => store.storeName === selectedStoreName) ||
+                          otherUsersStores.find(store => store.storeName === selectedStoreName);
 
-        // @ts-ignore
-        onChange={(e: SelectChangeEvent<string>) => {
-          const selectedStoreName = e.target.value;
-          const selectedStore = storesToSendTo.find(store => store.storeName === selectedStoreName);
-
+    console.log("POLS: ", selectedStoreName, selectedStore, selectedStore?.id);
+    
     setStoreName(selectedStoreName);
+    
     if (selectedStore) {
+      // Use selectedStore.id if it exists
       setStoreID(selectedStore.id);
+    } else {
+      // Handle case where store is not found
+      console.error("Store not found");
     }
-        }}
-        >
-      <MenuItem value="" disabled>
+  }}
+>
+  <MenuItem value="" disabled>
     Select a store to put this in
   </MenuItem>
 
+  <MenuItem value="myStore" onClick={() => openWindow("")}>
+    Add new store
+  </MenuItem>
 
-  <MenuItem value="myStore"  onClick={() => openWindow("")}>Add new store</MenuItem>
-   
   {storesToSendTo.map((store, index) => (
-    // @ts-ignore
-        <MenuItem key={index} value={store.storeName}>
-         {/* // @ts-ignore */}
-          {store.storeName} [You]
-        </MenuItem>
-      ))}
-
-
-  {otherUsersStores.map((store, index) => (
-     // @ts-ignore
-     <MenuItem key={index} value={store.storeName}>
-      {store.storeName} [{store.userName}]
+    <MenuItem key={index} value={store.storeName}>
+      {store.storeName} [You]
     </MenuItem>
   ))}
 
+  {otherUsersStores.map((store, index) => (
+    <MenuItem key={index} value={store.storeName}>
+      {store.storeName} [{store.userName}]
+    </MenuItem>
+  ))}
 </Select>
+
 	  </Div>
 
 

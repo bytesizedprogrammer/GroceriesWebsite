@@ -1,0 +1,36 @@
+{itemData.map((item) => ( 
+        <ImageListItem key={item.img} >
+          <img
+            srcSet={`${item.img}?w=248&fit=crop&auto=format&dpr=2 2x`}
+            src={`${item.img}?w=248&fit=crop&auto=format`}
+            alt={item.title}
+            loading="lazy"
+            onClick={() => openWindow(item.img, item.title, "Walmart", "N/A", "N/A")}
+          />
+          <ImageListItemBar
+            title={item.title.length > 7 ? `${item.title.slice(0, 5)}...` : item.title}
+            actionIcon={
+              <div>
+<IconButton 
+            onClick={() => openWindow(item.img, item.title, "Walmart", item.name, item.timeAndDate)} 
+            sx={{ color: 'white' }}
+          >
+            <InfoIcon />
+          </IconButton>
+          
+
+              <IconButton onClick={() => handleVote(item.img, 1)} sx={{ color: 'white' }}>
+                    <ArrowUpwardIcon />
+                  </IconButton>
+                  <span style={{ color: 'white', margin: '0 0px' }}>
+                    {votes[item.img] || 0}
+                  </span>
+                  <IconButton onClick={() => handleVote(item.img, -1)} sx={{ color: 'white' }}>
+                    <ArrowDownwardIcon />
+                  </IconButton>
+                </div>
+              
+            }
+          />
+        </ImageListItem>
+      ))}

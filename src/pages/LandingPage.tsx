@@ -26,6 +26,8 @@ import { AuthContext } from "../context/AuthContext.jsx"
 
 import { getUrl } from 'aws-amplify/storage';
 
+import JohnPork from '../assets/jp.jpeg'
+
 const client = generateClient<Schema>();
 
 
@@ -66,7 +68,43 @@ const [clicked, setClicked] = useState([]);
 
 
   const handleVote = (key: string, delta: number) => {
+    console.log(`Key: ${key}, Delta: ${delta}`);
+    
+    const fetchObj = { id: key }
 
+    client.models.Storeobject.get(fetchObj).then(async (res) => {
+      console.log(res.data);
+
+      let newQuantityOfProduct = Number(res.data.quantityOfProduct) + delta
+      console.log("newQuantityOfProduct: ", newQuantityOfProduct);
+
+      if (!(newQuantityOfProduct == 0)) {
+      const updateObj = {
+        id: key,
+        quantityOfProduct: newQuantityOfProduct
+      }
+
+      // 1. Update the backend:
+      await client.models.Storeobject.update(updateObj).then(res => {
+        // 2. Update the UI (myStoreItems state):
+        setMyStoreItems((prevItems) => {
+        return prevItems.map(storeArray => {
+          return storeArray.map((item) => {
+          if (item?.id === key) {
+            return { ...item, quantityOfProduct: newQuantityOfProduct };
+          }
+          return item;
+          });
+        });
+       });
+      });
+    } else {
+      // alert you can't reduce further please click on the img and hit complete/finished to delete
+    }
+    });
+  
+
+      /*
     // debugging, ignore
     console.log("as",[key]) 
     console.log('or',votes[key])
@@ -81,6 +119,7 @@ const [clicked, setClicked] = useState([]);
       // [key]: This updates the specific key (the item being voted on) in the votes object.
       // (prevVotes[key] || 0) + delta: This part retrieves the current vote count for the item (prevVotes[key]). If it doesn't exist (i.e., it's undefined), it uses 0 as the default. Then, delta (either +1 or -1) is added to this value to update the vote.
     }));
+    */
   };
 
 
@@ -91,16 +130,30 @@ const [clicked, setClicked] = useState([]);
   const [selectedValue, setSelectedValue] = useState(""); // title + store name combined into one variable name
   const [descriptionSetup, setDescriptionSetup] = useState("");
 
+
+  const [imgUrlAsID, setImgUrlAsID] = useState<string>("");
+
   const openWindow = (imgUrlAsID: string, productName: string, hardCodedStoreForNowUntilBackendImplemented: string, name: string, timeAndDate: string) => {
+    setImgUrlAsID(imgUrlAsID); // <-- this line
+
     setSelectedValue(`${productName} | ${hardCodedStoreForNowUntilBackendImplemented}`);
     console.log(imgUrlAsID)
 
     if (timeAndDate === "N/A") {
       setDescriptionSetup("N/A")
     } else {
-      const time = timeAndDate.slice(0, 10); // i.e.: 19:07
-      const date = timeAndDate.slice(11); // i.e.: 2/1/2025 ORRRR February 1, 2025 ORRRR Saturday, February 1, 2025
-      setDescriptionSetup(`Added by ${name} at ${time} on ${date}`);
+      const date = timeAndDate.split("T")[0]; // "2025-04-25"
+const time24 = timeAndDate.split("T")[1].split("Z")[0]; // "00:08:19.792"
+
+// Convert to 12-hour format
+const [hour, minute, second] = time24.split(":");
+let hour12 = ((+hour % 12) || 12); // Convert hour to 12-hour format
+const ampm = +hour < 12 ? "AM" : "PM";
+const time12 = `${hour12}:${minute} ${ampm}`;
+
+console.log("Date:", date);     // "2025-04-25"
+console.log("Time:", time12);   // "12:08 AM"
+      setDescriptionSetup(`Added by ${name} at ${time12} on ${date}`);
     }
     setOpen(true);  
   }
@@ -116,55 +169,252 @@ const [clicked, setClicked] = useState([]);
     }
   }, [authContext]);
 
+
+
+  const [myStoreItems, setMyStoreItems] = useState([]);
+  const [version, setVersion] = useState(0);
+
+  useEffect(() => {
+    // myStoreItems: Part 1, this fetches the stores
+    const retrieveYourStores = async() => {
+      try {
+        const res = await client.models.Store.list({
+          filter: {
+            userID: {
+              // @ts-ignore
+              eq: authContext.userId
+            }
+          }
+        })
+        
+       // console.log("(We're Retrieving your stores) Retrieve Your Groceries Result: ", res);
+
+        // res.data
+        retrieveYourStoreObjects(res.data);
+
+      } catch (err) {
+        console.error("Error with retrieveYourStores: ", err);
+      }
+    } 
+
+    // myStoreItems: Part 2, this fetches the objects per store
+    const retrieveYourStoreObjects = async(data) => {
+      try {
+        console.log("retrieveYourStoreObjects: ", data);
+        const result = [];
+        const storeIDsList = [];
+
+        for (const store of data) {
+          const res = await client.models.Storeobject.list({
+            filter: {
+              storeID: {
+                // @ts-ignore
+                eq: store.id
+              }
+            }
+          })
+
+          storeIDsList.push(store.id);
+
+          console.log("I hope you fart naked tn: ", store/*, res.data*/);
+
+          console.log(`Res.data: ${res.data.length}`);
+
+
+
+          const user = await client.models.User.get({id: store.userID});
+          console.log("EDP445: ", user)
+
+          const personsName = user?.data.name || "Unknown vrk";
+
+          const urlPromises = res.data.map(obj =>
+            obj.objectImage ? getUrl({ path: obj.objectImage }) : null
+            //console.log("For Ringler: ", obj.objectImage)
+          )
+
+          const urls = await Promise.all(urlPromises);
+          const itemsWithUrls = res.data.map((obj, index) => ({
+            ...obj,
+            imageUrl: urls[index] ? urls[index].url.toString() : null,
+            personsName: personsName
+          }))
+
+          console.log(`Items with URLs: ${JSON.stringify(itemsWithUrls)}`)
+
+          if (!(res.data.length == 0)){ 
+            //result.push([store.storeName, ...res.data]);
+            result.push([store.storeName, ...itemsWithUrls]);
+          }
+
+
+        }
+
+        setMyStoreItems(result);
+        setStoreIDs(storeIDsList)
+
+      } catch (err) {
+        console.error("Error with retrieveYourStoreObjects: ", err);
+      }
+    }
+
+
+    if (client && authContext?.userId) { 
+      retrieveYourStores();
+      //retrieveYourFriendsGroceries();
+    }
+  }, [client, authContext, version]);
+
+  useEffect(() => {
+    console.log(`Version: ${version}`);
+  }, [version]);
+
+  const handleDialogUpdate = () => {
+    setVersion(prev => prev + 1); // force refresh
+  };
+
+
+  const [storeIDs, setStoreIDs] = useState([]);
+
+  useEffect(() => {
+    console.log(`Test Data: ${storeIDs}`)
+
+    console.log("storeIDs:", storeIDs);
+console.log("Type of storeIDs:", typeof storeIDs);
+console.log("Is Array?", Array.isArray(storeIDs));
+  }, [storeIDs])
+
+  useEffect(() => {
+    console.log(`TS PMO: ${storeIDs}`)
+    if (storeIDs.length > 0) {
+
+      const handleVersionUpdate = (data: any) => {
+        console.log(`Data: ${JSON.stringify(data)}`)
+  
+        console.log("Tester Data: ", data.storeID)
+
+        console.log(storeIDs.includes(data.storeID))
+        // @ts-ignore
+        if (storeIDs.includes(data.storeID)) { // instead have an array of all your storeIDs called storeIDs and have this check if the data.storeID is in storeIDs
+          // Only update version if the userID matches
+          // @ts-ignore
+          setVersion((prevVersion) => prevVersion + 1);
+        }
+      }; // storeIDs
+  
+      // Subscribe to store object creation events
+      // @ts-ignore
+      const createSub = client.models.Storeobject.onCreate().subscribe({
+        next: handleVersionUpdate,
+        // @ts-ignore
+        error: (error) => console.warn(error),
+      });
+  
+      // Subscribe to store object update events
+      // @ts-ignore
+      const updateSub = client.models.Storeobject.onUpdate().subscribe({
+        next: handleVersionUpdate,
+        // @ts-ignore
+        error: (error) => console.warn(error),
+      });
+  
+      // Subscribe to store object deletion events
+      // @ts-ignore
+      const deleteSub = client.models.Storeobject.onDelete().subscribe({
+        next: handleVersionUpdate,
+        // @ts-ignore
+        error: (error) => console.warn(error),
+      });
+  
+      // Cleanup on unmount
+      return () => {
+        createSub.unsubscribe();
+        updateSub.unsubscribe();
+        deleteSub.unsubscribe();
+      };
+    }
+    }, [storeIDs, authContext]);
+  
+  
   return (
     <>
     <div className='mainContainer'>
         <ImageList 
           sx = {sxStyles}        
         >
-      <ImageListItem key="Subheader" cols={2}>
-        <ListSubheader 
 
-        className='Title' component="div">  {title[0]}      {clicked[0] ? <KeyboardArrowDownIcon /> : <KeyboardArrowUpIcon />}{/* ACCORDION: Add a little dropdown thingy so you can close the content of that store, add notification number to convey how many unique products are remaining to purchase */} </ListSubheader>
+
+{myStoreItems.map((storeArray, idx) => (
+  <>
+      <ImageListItem key="Subheader" cols={2} 
+        sx={{ marginTop: idx > 0 ? '50px' : '0px' }}
+      >
+        
+        <ListSubheader 
+        className='Title' component="div">  {storeArray[0]} 
+         {/*{clicked[0] ? <KeyboardArrowDownIcon /> : <KeyboardArrowUpIcon />} */} 
+ 
+        {/* ACCORDION: Add a little dropdown thingy so you can close the content of that store, add notification number to convey how many unique products are remaining to purchase */} 
+        </ListSubheader>
+        
         <DynamicDialog 
       selectedValue={selectedValue} 
       description={descriptionSetup}
       open={open} 
       onOpen={() => setOpen(true)} 
-      onClose={() => setOpen(false)}
+      onClose={(asd) => {setOpen(false)
+        if (asd == "as") {
+          handleDialogUpdate()
+        }
+      }}
+      imgUrlAsID={imgUrlAsID}
     />
       </ImageListItem>
     
       
+
+
       {/* Map here will be via objects of array */}
-      {itemData.map((item) => ( 
-        <ImageListItem key={item.img} >
+      {storeArray.slice(1).map((item, i) => (
+      <ImageListItem key={i}> {/* key={} */}
           <img
-            srcSet={`${item.img}?w=248&fit=crop&auto=format&dpr=2 2x`}
-            src={`${item.img}?w=248&fit=crop&auto=format`}
-            alt={item.title}
+            //srcSet={`${item.img}?w=248&fit=crop&auto=format&dpr=2 2x`}
+            //src={`${item.img}?w=248&fit=crop&auto=format`}
+            src={item.imageUrl}
+            // src={item.objectImage}
+            alt={item.objectName}
             loading="lazy"
-            onClick={() => openWindow(item.img, item.title, "Walmart", "N/A", "N/A")}
+            onClick={() => openWindow(item.id, item.objectName, storeArray[0], "N/A", "N/A")}
           />
           <ImageListItemBar
-            title={item.title.length > 7 ? `${item.title.slice(0, 5)}...` : item.title}
+            //title={item.title.length > 7 ? `${item.title.slice(0, 5)}...` : item.title}
+            title={item.objectName.length > 7 ? `${item.objectName.slice(0, 5)}...` : item.objectName}
+
             actionIcon={
               <div>
-<IconButton 
-            onClick={() => openWindow(item.img, item.title, "Walmart", item.name, item.timeAndDate)} 
+          <IconButton 
+            //onClick={() => openWindow(item.img, item.title, "Walmart", item.name, item.timeAndDate)} 
+            onClick={() => openWindow(item.id, item.objectName, storeArray[0], item.personsName, item.createdAt)} 
             sx={{ color: 'white' }}
           >
             <InfoIcon />
           </IconButton>
           
 
-              <IconButton onClick={() => handleVote(item.img, 1)} sx={{ color: 'white' }}>
+              <IconButton 
+              onClick={() => handleVote(item.id, 1)} 
+              sx={{ color: 'white' }}
+              >
                     <ArrowUpwardIcon />
                   </IconButton>
-                  <span style={{ color: 'white', margin: '0 0px' }}>
-                    {votes[item.img] || 0}
+                  <span 
+                  style={{ color: 'white', margin: '0 0px' }}
+                  >
+                   {item.quantityOfProduct}
                   </span>
-                  <IconButton onClick={() => handleVote(item.img, -1)} sx={{ color: 'white' }}>
+                  <IconButton 
+                  onClick={() => handleVote(item.id, -1)} 
+                  sx={{ color: 'white' }}
+                  >
                     <ArrowDownwardIcon />
                   </IconButton>
                 </div>
@@ -172,7 +422,16 @@ const [clicked, setClicked] = useState([]);
             }
           />
         </ImageListItem>
+         ))}
+
+        </>
       ))}
+
+
+
+
+
+
 
 
     </ImageList>
