@@ -1,0 +1,116 @@
+ return (
+    <>
+    <div className='mainContainer'>
+      
+    <select
+  value={whoseView}
+  onChange={(e) => setWhoseView(e.target.value)}
+>
+  <option value="yours">Your View</option>
+  {friendListUI && friendListUI.map((friend) => (
+    <option key={friend.friendID} value={friend.friendID}>
+      {friend.name}
+    </option>
+  ))}
+</select>
+
+        <ImageList 
+          sx = {sxStyles}        
+        >
+
+
+{myStoreItems.map((storeArray, idx) => (
+  <>
+      <ImageListItem key="Subheader" cols={2} 
+        sx={{ marginTop: idx > 0 ? '50px' : '0px' }}
+      >
+        
+        <ListSubheader 
+        className='Title' component="div">  {storeArray[0]} 
+         {/*{clicked[0] ? <KeyboardArrowDownIcon /> : <KeyboardArrowUpIcon />} */} 
+ 
+        {/* ACCORDION: Add a little dropdown thingy so you can close the content of that store, add notification number to convey how many unique products are remaining to purchase */} 
+        </ListSubheader>
+        
+        <DynamicDialog 
+      selectedValue={selectedValue} 
+      description={descriptionSetup}
+      open={open} 
+      onOpen={() => setOpen(true)} 
+      onClose={(asd) => {setOpen(false)
+        if (asd == "as") {
+          handleDialogUpdate()
+        }
+      }}
+      imgUrlAsID={imgUrlAsID}
+    />
+      </ImageListItem>
+    
+      
+
+
+      {/* Map here will be via objects of array */}
+      {storeArray.slice(1).map((item, i) => (
+      <ImageListItem key={i}> {/* key={} */}
+          <img
+            //srcSet={`${item.img}?w=248&fit=crop&auto=format&dpr=2 2x`}
+            //src={`${item.img}?w=248&fit=crop&auto=format`}
+            src={item.imageUrl}
+            // src={item.objectImage}
+            alt={item.objectName}
+            loading="lazy"
+            onClick={() => openWindow(item.id, item.objectName, storeArray[0], "N/A", "N/A")}
+          />
+          <ImageListItemBar
+            //title={item.title.length > 7 ? `${item.title.slice(0, 5)}...` : item.title}
+            title={item.objectName.length > 7 ? `${item.objectName.slice(0, 5)}...` : item.objectName}
+
+            actionIcon={
+              <div>
+          <IconButton 
+            //onClick={() => openWindow(item.img, item.title, "Walmart", item.name, item.timeAndDate)} 
+            onClick={() => openWindow(item.id, item.objectName, storeArray[0], item.personsName, item.createdAt)} 
+            sx={{ color: 'white' }}
+          >
+            <InfoIcon />
+          </IconButton>
+          
+
+              <IconButton 
+              onClick={() => handleVote(item.id, 1)} 
+              sx={{ color: 'white' }}
+              >
+                    <ArrowUpwardIcon />
+                  </IconButton>
+                  <span 
+                  style={{ color: 'white', margin: '0 0px' }}
+                  >
+                   {item.quantityOfProduct}
+                  </span>
+                  <IconButton 
+                  onClick={() => handleVote(item.id, -1)} 
+                  sx={{ color: 'white' }}
+                  >
+                    <ArrowDownwardIcon />
+                  </IconButton>
+                </div>
+              
+            }
+          />
+        </ImageListItem>
+         ))}
+
+        </>
+      ))}
+
+
+
+
+
+
+
+
+    </ImageList>
+    </div>
+    </>
+  );

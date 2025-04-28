@@ -174,6 +174,11 @@ console.log("Time:", time12);   // "12:08 AM"
   const [myStoreItems, setMyStoreItems] = useState([]);
   const [version, setVersion] = useState(0);
 
+  const [friendListUI, setFriendListUI] = useState(null);
+
+  const [listOfFriendUserIDs, setListOfFriendUserIDs] = useState(null);
+  const [whoseView, setWhoseView] = useState<string>("yours");
+
   useEffect(() => {
     // myStoreItems: Part 1, this fetches the stores
     const retrieveYourStores = async() => {
@@ -198,13 +203,265 @@ console.log("Time:", time12);   // "12:08 AM"
     } 
 
     // myStoreItems: Part 2, this fetches the objects per store
-    const retrieveYourStoreObjects = async(data) => {
+
+
+    const retrieveYourStoreObjects = async (data) => {
       try {
         console.log("retrieveYourStoreObjects: ", data);
         const result = [];
         const storeIDsList = [];
-
+    
         for (const store of data) {
+          const res = await client.models.Storeobject.list({
+            filter: {
+              storeID: {
+                eq: store.id
+              }
+            }
+          });
+    
+          storeIDsList.push(store.id);
+    
+          console.log("Processing store: ", store);
+          console.log(`Found ${res.data.length} objects.`);
+    
+          // For each object, fetch its user's name individually
+          const itemsWithUsernamesPromises = res.data.map(async (obj) => {
+            let personsName = "Unknown vrk";
+    
+            if (obj.userID) {
+              try {
+                const user = await client.models.User.get({ id: obj.userID });
+                personsName = user?.data?.name || "Unknown vrk";
+              } catch (error) {
+                console.error(`Failed to fetch user for userID ${obj.userID}:`, error);
+              }
+            }
+    
+            // Get image URL if exists
+            let imageUrl = null;
+    
+            if (obj.wasImagePresetOrUploaded === "uploaded") {
+              imageUrl = obj.objectImage ? await getUrl({ path: obj.objectImage }) : null;
+            } else {
+              imageUrl = obj.objectImage; // preset URL (string)
+            }
+    
+            return {
+              ...obj,
+              imageUrl: imageUrl
+                ? (typeof imageUrl === "string" ? imageUrl : imageUrl.url.toString())
+                : null,
+              personsName: personsName
+            };
+          });
+    
+          const itemsWithUrlsAndNames = await Promise.all(itemsWithUsernamesPromises);
+    
+          console.log(`Items with names and URLs: ${JSON.stringify(itemsWithUrlsAndNames)}`);
+    
+          if (itemsWithUrlsAndNames.length > 0) {
+            result.push([store.storeName, ...itemsWithUrlsAndNames]);
+          }
+        }
+    
+        setMyStoreItems(result);
+        setStoreIDs(storeIDsList);
+    
+      } catch (err) {
+        console.error("Error with retrieveYourStoreObjects: ", err);
+      }
+    }
+    
+
+    /* // Good only for uploads
+    const retrieveYourStoreObjects = async (data) => {
+      try {
+        console.log("retrieveYourStoreObjects: ", data);
+        const result = [];
+        const storeIDsList = [];
+    
+        for (const store of data) {
+          const res = await client.models.Storeobject.list({
+            filter: {
+              storeID: {
+                eq: store.id
+              }
+            }
+          });
+    
+          storeIDsList.push(store.id);
+    
+          console.log("Processing store: ", store);
+          console.log(`Found ${res.data.length} objects.`);
+    
+          // For each object, fetch its user's name individually
+          const itemsWithUsernamesPromises = res.data.map(async (obj) => {
+            let personsName = "Unknown vrk";
+    
+            if (obj.userID) {
+              try {
+                const user = await client.models.User.get({ id: obj.userID });
+              //  console.log(`Obtain ally name: ${JSON.stringify(user)}`);
+              //  console.log(`Obtain ally name: ${user.data.name}`);
+                personsName = user?.data?.name || "Unknown vrk";
+              } catch (error) {
+                console.error(`Failed to fetch user for userID ${obj.userID}:`, error);
+              }
+            }
+    
+            // Get image URL if exists
+            const imageUrl = obj.objectImage ? await getUrl({ path: obj.objectImage }) : null;
+  
+
+            return {
+              ...obj,
+              imageUrl: imageUrl ? imageUrl.url.toString() : null,
+              personsName: personsName
+            };
+          });
+    
+          const itemsWithUrlsAndNames = await Promise.all(itemsWithUsernamesPromises);
+    
+          console.log(`Items with names and URLs: ${JSON.stringify(itemsWithUrlsAndNames)}`);
+    
+          if (itemsWithUrlsAndNames.length > 0) {
+            result.push([store.storeName, ...itemsWithUrlsAndNames]);
+          }
+        }
+    
+        setMyStoreItems(result);
+        setStoreIDs(storeIDsList);
+    
+      } catch (err) {
+        console.error("Error with retrieveYourStoreObjects: ", err);
+      }
+    }
+    */
+  
+
+
+
+
+
+
+
+    // FRIEND TIME:
+    const retrieveYourFriends = async () => {
+      try {
+        const res = await client.models.FriendsList.list({
+          filter: {
+            and: [
+              {
+                or: [
+                  {
+                    userID: {
+                      // @ts-ignore
+                      eq: authContext.userId
+                    }
+                  },
+                  {
+                    userID2: {
+                      // @ts-ignore
+                      eq: authContext.userId
+                    }
+                  }
+                ]
+              },
+              {
+                statusOfRequest: {
+                  eq: "ACCEPTED"
+                }
+              }
+            ]
+          }
+        });
+        
+        console.log(`Testing progression: ${JSON.stringify(res.data)}`);
+        const authUserId = authContext.userId; // assuming you have this
+
+const data = res.data; // your array
+
+const otherUserIds = data.flatMap(item => {
+  const ids = [];
+  if (item.userID !== authUserId) ids.push(item.userID);
+  if (item.userID2 !== authUserId) ids.push(item.userID2);
+  return ids;
+});
+
+console.log(`Testing Progress ${otherUserIds}`);
+
+
+
+let friendListToBeMadeForUI = [];
+
+
+for (let i = 0; i < otherUserIds.length; i++) {
+  console.log(`Loop iteration ${i}, userId: ${otherUserIds[i]}`);
+  try {
+    const user = await client.models.User.get({
+      // @ts-ignore
+      id: otherUserIds[i]
+    });
+
+    console.log("CHECK USER DATA: ", user.data.name);
+
+    const userName = user?.data?.name && user.data.name.trim() !== "" ? user.data.name : "Unknown User";
+
+    console.log(`Retrieved User Name: ${userName}`);
+
+    const obj = { friendID: otherUserIds[i], name: userName };
+
+    friendListToBeMadeForUI.push(obj);
+  } catch (innerErr) {
+    console.error(`Error fetching user with id ${otherUserIds[i]}:`, innerErr);
+  }
+}
+
+setFriendListUI(friendListToBeMadeForUI);
+setListOfFriendUserIDs(otherUserIds); // this is for real time updates for checking if these need to be refreshed or not
+      } catch (err) {
+        console.error("Error with retrieveYourFriends: ", err);
+      }
+    }
+
+
+
+    const retrieveFriendStores = async () => {
+      try {
+        console.log(`Jvoew: ${whoseView}`)
+
+
+        
+        const res = await client.models.Store.list({
+          filter: {
+            userID: {
+              // @ts-ignore
+              eq: whoseView
+            }
+          }
+        })
+        
+
+        console.log(`JvoewA: ${JSON.stringify(res.data)}`)
+
+        retrieveYourBuddyStoreObjects(res.data);
+      
+
+      } catch (err) {
+        console.error("Error with retrieveFriendStores: ", err);
+
+      }
+    }
+
+    /*
+    const retrieveYourBuddyStoreObjects = async (data) => {
+      try {
+        console.log("retrieveYourStoreObjects: ", data);
+        const result = [];
+        const storeIDsList = [];
+        
+        const storesGoThru = data.map(async(store) => {
           const res = await client.models.Storeobject.list({
             filter: {
               storeID: {
@@ -212,57 +469,138 @@ console.log("Time:", time12);   // "12:08 AM"
                 eq: store.id
               }
             }
-          })
-
+          });
+          
           storeIDsList.push(store.id);
-
-          console.log("I hope you fart naked tn: ", store/*, res.data*/);
-
-          console.log(`Res.data: ${res.data.length}`);
-
-
-
-          const user = await client.models.User.get({id: store.userID});
-          console.log("EDP445: ", user)
-
-          const personsName = user?.data.name || "Unknown vrk";
-
-          const urlPromises = res.data.map(obj =>
-            obj.objectImage ? getUrl({ path: obj.objectImage }) : null
-            //console.log("For Ringler: ", obj.objectImage)
-          )
-
-          const urls = await Promise.all(urlPromises);
-          const itemsWithUrls = res.data.map((obj, index) => ({
-            ...obj,
-            imageUrl: urls[index] ? urls[index].url.toString() : null,
-            personsName: personsName
-          }))
-
-          console.log(`Items with URLs: ${JSON.stringify(itemsWithUrls)}`)
-
-          if (!(res.data.length == 0)){ 
-            //result.push([store.storeName, ...res.data]);
-            result.push([store.storeName, ...itemsWithUrls]);
+          
+          console.log("Processing store: ", store);
+          console.log(`Found ${res.data.length} objects.`);
+          
+          // For each object, fetch its user's name individually
+          const itemsWithUsernamesPromises = res.data.map(async (obj) => {
+            let personsName = "Unknown vrk";
+            console.log(`OBJ: ${JSON.stringify(obj)}`)
+            if (obj.userID) {
+              try {
+                const user = await client.models.User.get({ id: obj.userID });
+                personsName = user?.data?.name || "Unknown vrk";
+              } catch (error) {
+                console.error(`Failed to fetch user for userID ${obj.userID}:`, error);
+              }
+            }
+            
+            // Get image URL if exists
+            const imageUrl = obj.objectImage ? await getUrl({ path: obj.objectImage }) : null;
+            
+            return {
+              ...obj,
+              imageUrl: imageUrl ? imageUrl.url.toString() : null,
+              personsName: personsName
+            };
+          });
+          
+          const itemsWithUrlsAndNames = await Promise.all(itemsWithUsernamesPromises);
+          
+          console.log(`Items with names and URLs: ${JSON.stringify(itemsWithUrlsAndNames)}`);
+          
+          if (itemsWithUrlsAndNames.length > 0) {
+            result.push([store.storeName, ...itemsWithUrlsAndNames]);
           }
-
-
-        }
-
+        });
+        
+        await Promise.all(storesGoThru);
+        
         setMyStoreItems(result);
-        setStoreIDs(storeIDsList)
-
+        setStoreIDs(storeIDsList);
+        
       } catch (err) {
         console.error("Error with retrieveYourStoreObjects: ", err);
       }
-    }
+    };*/
+
+    const retrieveYourBuddyStoreObjects = async (data) => {
+      try {
+        console.log("retrieveYourStoreObjects: ", data);
+        const result = [];
+        const storeIDsList = [];
+    
+        const storesGoThru = data.map(async (store) => {
+          const res = await client.models.Storeobject.list({
+            filter: {
+              // @ts-ignore
+              storeID: {
+                eq: store.id
+              }
+            }
+          });
+    
+          storeIDsList.push(store.id);
+    
+          console.log("Processing store: ", store);
+          console.log(`Found ${res.data.length} objects.`);
+    
+          // For each object, fetch its user's name individually
+          const itemsWithUsernamesPromises = res.data.map(async (obj) => {
+            let personsName = "Unknown vrk";
+            console.log(`OBJ: ${JSON.stringify(obj)}`);
+    
+            if (obj.userID) {
+              try {
+                const user = await client.models.User.get({ id: obj.userID });
+                personsName = user?.data?.name || "Unknown vrk";
+              } catch (error) {
+                console.error(`Failed to fetch user for userID ${obj.userID}:`, error);
+              }
+            }
+    
+            // Get image URL if exists
+            let imageUrl = null;
+    
+            if (obj.wasImagePresetOrUploaded === "uploaded") {
+              imageUrl = obj.objectImage ? await getUrl({ path: obj.objectImage }) : null;
+            } else {
+              imageUrl = obj.objectImage; // preset (string)
+            }
+    
+            return {
+              ...obj,
+              imageUrl: imageUrl
+                ? (typeof imageUrl === "string" ? imageUrl : imageUrl.url.toString())
+                : null,
+              personsName: personsName
+            };
+          });
+    
+          const itemsWithUrlsAndNames = await Promise.all(itemsWithUsernamesPromises);
+    
+          console.log(`Items with names and URLs: ${JSON.stringify(itemsWithUrlsAndNames)}`);
+    
+          if (itemsWithUrlsAndNames.length > 0) {
+            result.push([store.storeName, ...itemsWithUrlsAndNames]);
+          }
+        });
+    
+        await Promise.all(storesGoThru);
+    
+        setMyStoreItems(result);
+        setStoreIDs(storeIDsList);
+    
+      } catch (err) {
+        console.error("Error with retrieveYourStoreObjects: ", err);
+      }
+    };
+    
 
 
-    if (client && authContext?.userId) { 
+
+
+    if (client && authContext?.userId && whoseView == "yours") { 
       retrieveYourStores();
-      //retrieveYourFriendsGroceries();
+      retrieveYourFriends();
+    } else if (client  && authContext?.userId && whoseView != "yours") {
+      retrieveFriendStores();
     }
-  }, [client, authContext, version]);
+  }, [client, authContext, version, whoseView]);
 
   useEffect(() => {
     console.log(`Version: ${version}`);
@@ -294,7 +632,7 @@ console.log("Is Array?", Array.isArray(storeIDs));
 
         console.log(storeIDs.includes(data.storeID))
         // @ts-ignore
-        if (storeIDs.includes(data.storeID)) { // instead have an array of all your storeIDs called storeIDs and have this check if the data.storeID is in storeIDs
+        if (storeIDs.includes(data.storeID) || listOfFriendUserIDs.includes(data.storeID)) { // instead have an array of all your storeIDs called storeIDs and have this check if the data.storeID is in storeIDs
           // Only update version if the userID matches
           // @ts-ignore
           setVersion((prevVersion) => prevVersion + 1);
@@ -334,14 +672,53 @@ console.log("Is Array?", Array.isArray(storeIDs));
     }
     }, [storeIDs, authContext]);
   
+
+    useEffect(() => {
+      console.log(`Whose VIew: ${whoseView}
+            friendListUI: ${JSON.stringify(friendListUI)}
+        `)
+    }, [whoseView, friendListUI])
   
+
+    /*
+<select
+      value={whoseView}
+      onChange={(e) => setWhoseView(e.target.value)}
+    >
+      <option value="yours">Your View</option>
+      {friendListUI.map((friend) => (
+        <option value={friend.name}>
+          {friend.name}
+        </option>
+      ))}
+    </select>
+    */
+
   return (
     <>
+     <div class="topSelectContainer">
+    <select
+  value={whoseView}
+  onChange={(e) => setWhoseView(e.target.value)}
+  class='asdasd'
+>
+  <option value="yours">Your View</option>
+  {friendListUI && friendListUI.map((friend) => (
+    <option key={friend.friendID} value={friend.friendID}>
+      {friend.name}
+    </option>
+  ))}
+</select>
+</div>
+
     <div className='mainContainer'>
+      
+  
+
         <ImageList 
           sx = {sxStyles}        
         >
-
+   
 
 {myStoreItems.map((storeArray, idx) => (
   <>

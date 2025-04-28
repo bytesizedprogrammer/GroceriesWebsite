@@ -1,3 +1,13 @@
+.topSelectContainer {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    margin-top: 20px;
+}
+
+
 .mainContainer {
     display: flex;
     justify-content: center;
