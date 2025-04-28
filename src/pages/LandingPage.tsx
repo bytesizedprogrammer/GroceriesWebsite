@@ -68,15 +68,12 @@ const [clicked, setClicked] = useState([]);
 
 
   const handleVote = (key: string, delta: number) => {
-    console.log(`Key: ${key}, Delta: ${delta}`);
     
     const fetchObj = { id: key }
 
     client.models.Storeobject.get(fetchObj).then(async (res) => {
-      console.log(res.data);
 
       let newQuantityOfProduct = Number(res.data.quantityOfProduct) + delta
-      console.log("newQuantityOfProduct: ", newQuantityOfProduct);
 
       if (!(newQuantityOfProduct == 0)) {
       const updateObj = {
@@ -106,9 +103,7 @@ const [clicked, setClicked] = useState([]);
 
       /*
     // debugging, ignore
-    console.log("as",[key]) 
-    console.log('or',votes[key])
-   
+
     if (votes[key] == 1) {
       // make it so, when "vote" count is 1, you cant decrease the quantity
     }
@@ -137,7 +132,6 @@ const [clicked, setClicked] = useState([]);
     setImgUrlAsID(imgUrlAsID); // <-- this line
 
     setSelectedValue(`${productName} | ${hardCodedStoreForNowUntilBackendImplemented}`);
-    console.log(imgUrlAsID)
 
     if (timeAndDate === "N/A") {
       setDescriptionSetup("N/A")
@@ -151,8 +145,7 @@ let hour12 = ((+hour % 12) || 12); // Convert hour to 12-hour format
 const ampm = +hour < 12 ? "AM" : "PM";
 const time12 = `${hour12}:${minute} ${ampm}`;
 
-console.log("Date:", date);     // "2025-04-25"
-console.log("Time:", time12);   // "12:08 AM"
+
       setDescriptionSetup(`Added by ${name} at ${time12} on ${date}`);
     }
     setOpen(true);  
@@ -161,13 +154,7 @@ console.log("Time:", time12);   // "12:08 AM"
 
 
   const authContext = useContext(AuthContext);
-  useEffect(() => {
-    if (authContext) {
-      console.log("✅ AuthContext in Landing Page: ", authContext);
-    } else {
-      console.warn("❌ AuthContext is null or undefined.");
-    }
-  }, [authContext]);
+
 
 
 
@@ -182,7 +169,6 @@ console.log("Time:", time12);   // "12:08 AM"
   useEffect(() => {
     // myStoreItems: Part 1, this fetches the stores
     const retrieveYourStores = async() => {
-      try {
         const res = await client.models.Store.list({
           filter: {
             userID: {
@@ -192,22 +178,16 @@ console.log("Time:", time12);   // "12:08 AM"
           }
         })
         
-       // console.log("(We're Retrieving your stores) Retrieve Your Groceries Result: ", res);
 
         // res.data
         retrieveYourStoreObjects(res.data);
 
-      } catch (err) {
-        console.error("Error with retrieveYourStores: ", err);
-      }
     } 
 
     // myStoreItems: Part 2, this fetches the objects per store
 
 
     const retrieveYourStoreObjects = async (data) => {
-      try {
-        console.log("retrieveYourStoreObjects: ", data);
         const result = [];
         const storeIDsList = [];
     
@@ -222,20 +202,16 @@ console.log("Time:", time12);   // "12:08 AM"
     
           storeIDsList.push(store.id);
     
-          console.log("Processing store: ", store);
-          console.log(`Found ${res.data.length} objects.`);
-    
+         
           // For each object, fetch its user's name individually
           const itemsWithUsernamesPromises = res.data.map(async (obj) => {
             let personsName = "Unknown vrk";
     
             if (obj.userID) {
-              try {
+             
                 const user = await client.models.User.get({ id: obj.userID });
                 personsName = user?.data?.name || "Unknown vrk";
-              } catch (error) {
-                console.error(`Failed to fetch user for userID ${obj.userID}:`, error);
-              }
+             
             }
     
             // Get image URL if exists
@@ -258,7 +234,6 @@ console.log("Time:", time12);   // "12:08 AM"
     
           const itemsWithUrlsAndNames = await Promise.all(itemsWithUsernamesPromises);
     
-          console.log(`Items with names and URLs: ${JSON.stringify(itemsWithUrlsAndNames)}`);
     
           if (itemsWithUrlsAndNames.length > 0) {
             result.push([store.storeName, ...itemsWithUrlsAndNames]);
@@ -268,78 +243,11 @@ console.log("Time:", time12);   // "12:08 AM"
         setMyStoreItems(result);
         setStoreIDs(storeIDsList);
     
-      } catch (err) {
-        console.error("Error with retrieveYourStoreObjects: ", err);
-      }
+   
     }
     
 
-    /* // Good only for uploads
-    const retrieveYourStoreObjects = async (data) => {
-      try {
-        console.log("retrieveYourStoreObjects: ", data);
-        const result = [];
-        const storeIDsList = [];
-    
-        for (const store of data) {
-          const res = await client.models.Storeobject.list({
-            filter: {
-              storeID: {
-                eq: store.id
-              }
-            }
-          });
-    
-          storeIDsList.push(store.id);
-    
-          console.log("Processing store: ", store);
-          console.log(`Found ${res.data.length} objects.`);
-    
-          // For each object, fetch its user's name individually
-          const itemsWithUsernamesPromises = res.data.map(async (obj) => {
-            let personsName = "Unknown vrk";
-    
-            if (obj.userID) {
-              try {
-                const user = await client.models.User.get({ id: obj.userID });
-              //  console.log(`Obtain ally name: ${JSON.stringify(user)}`);
-              //  console.log(`Obtain ally name: ${user.data.name}`);
-                personsName = user?.data?.name || "Unknown vrk";
-              } catch (error) {
-                console.error(`Failed to fetch user for userID ${obj.userID}:`, error);
-              }
-            }
-    
-            // Get image URL if exists
-            const imageUrl = obj.objectImage ? await getUrl({ path: obj.objectImage }) : null;
-  
-
-            return {
-              ...obj,
-              imageUrl: imageUrl ? imageUrl.url.toString() : null,
-              personsName: personsName
-            };
-          });
-    
-          const itemsWithUrlsAndNames = await Promise.all(itemsWithUsernamesPromises);
-    
-          console.log(`Items with names and URLs: ${JSON.stringify(itemsWithUrlsAndNames)}`);
-    
-          if (itemsWithUrlsAndNames.length > 0) {
-            result.push([store.storeName, ...itemsWithUrlsAndNames]);
-          }
-        }
-    
-        setMyStoreItems(result);
-        setStoreIDs(storeIDsList);
-    
-      } catch (err) {
-        console.error("Error with retrieveYourStoreObjects: ", err);
-      }
-    }
-    */
-  
-
+ 
 
 
 
@@ -348,7 +256,6 @@ console.log("Time:", time12);   // "12:08 AM"
 
     // FRIEND TIME:
     const retrieveYourFriends = async () => {
-      try {
         const res = await client.models.FriendsList.list({
           filter: {
             and: [
@@ -377,7 +284,6 @@ console.log("Time:", time12);   // "12:08 AM"
           }
         });
         
-        console.log(`Testing progression: ${JSON.stringify(res.data)}`);
         const authUserId = authContext.userId; // assuming you have this
 
 const data = res.data; // your array
@@ -389,7 +295,6 @@ const otherUserIds = data.flatMap(item => {
   return ids;
 });
 
-console.log(`Testing Progress ${otherUserIds}`);
 
 
 
@@ -397,39 +302,29 @@ let friendListToBeMadeForUI = [];
 
 
 for (let i = 0; i < otherUserIds.length; i++) {
-  console.log(`Loop iteration ${i}, userId: ${otherUserIds[i]}`);
-  try {
     const user = await client.models.User.get({
       // @ts-ignore
       id: otherUserIds[i]
     });
 
-    console.log("CHECK USER DATA: ", user.data.name);
 
     const userName = user?.data?.name && user.data.name.trim() !== "" ? user.data.name : "Unknown User";
 
-    console.log(`Retrieved User Name: ${userName}`);
 
     const obj = { friendID: otherUserIds[i], name: userName };
 
     friendListToBeMadeForUI.push(obj);
-  } catch (innerErr) {
-    console.error(`Error fetching user with id ${otherUserIds[i]}:`, innerErr);
-  }
+ 
 }
 
 setFriendListUI(friendListToBeMadeForUI);
 setListOfFriendUserIDs(otherUserIds); // this is for real time updates for checking if these need to be refreshed or not
-      } catch (err) {
-        console.error("Error with retrieveYourFriends: ", err);
-      }
+     
     }
 
 
 
     const retrieveFriendStores = async () => {
-      try {
-        console.log(`Jvoew: ${whoseView}`)
 
 
         
@@ -443,84 +338,16 @@ setListOfFriendUserIDs(otherUserIds); // this is for real time updates for check
         })
         
 
-        console.log(`JvoewA: ${JSON.stringify(res.data)}`)
 
         retrieveYourBuddyStoreObjects(res.data);
       
 
-      } catch (err) {
-        console.error("Error with retrieveFriendStores: ", err);
-
-      }
+   
     }
 
-    /*
+    
     const retrieveYourBuddyStoreObjects = async (data) => {
-      try {
-        console.log("retrieveYourStoreObjects: ", data);
-        const result = [];
-        const storeIDsList = [];
-        
-        const storesGoThru = data.map(async(store) => {
-          const res = await client.models.Storeobject.list({
-            filter: {
-              storeID: {
-                // @ts-ignore
-                eq: store.id
-              }
-            }
-          });
-          
-          storeIDsList.push(store.id);
-          
-          console.log("Processing store: ", store);
-          console.log(`Found ${res.data.length} objects.`);
-          
-          // For each object, fetch its user's name individually
-          const itemsWithUsernamesPromises = res.data.map(async (obj) => {
-            let personsName = "Unknown vrk";
-            console.log(`OBJ: ${JSON.stringify(obj)}`)
-            if (obj.userID) {
-              try {
-                const user = await client.models.User.get({ id: obj.userID });
-                personsName = user?.data?.name || "Unknown vrk";
-              } catch (error) {
-                console.error(`Failed to fetch user for userID ${obj.userID}:`, error);
-              }
-            }
-            
-            // Get image URL if exists
-            const imageUrl = obj.objectImage ? await getUrl({ path: obj.objectImage }) : null;
-            
-            return {
-              ...obj,
-              imageUrl: imageUrl ? imageUrl.url.toString() : null,
-              personsName: personsName
-            };
-          });
-          
-          const itemsWithUrlsAndNames = await Promise.all(itemsWithUsernamesPromises);
-          
-          console.log(`Items with names and URLs: ${JSON.stringify(itemsWithUrlsAndNames)}`);
-          
-          if (itemsWithUrlsAndNames.length > 0) {
-            result.push([store.storeName, ...itemsWithUrlsAndNames]);
-          }
-        });
-        
-        await Promise.all(storesGoThru);
-        
-        setMyStoreItems(result);
-        setStoreIDs(storeIDsList);
-        
-      } catch (err) {
-        console.error("Error with retrieveYourStoreObjects: ", err);
-      }
-    };*/
 
-    const retrieveYourBuddyStoreObjects = async (data) => {
-      try {
-        console.log("retrieveYourStoreObjects: ", data);
         const result = [];
         const storeIDsList = [];
     
@@ -536,21 +363,15 @@ setListOfFriendUserIDs(otherUserIds); // this is for real time updates for check
     
           storeIDsList.push(store.id);
     
-          console.log("Processing store: ", store);
-          console.log(`Found ${res.data.length} objects.`);
-    
+          
           // For each object, fetch its user's name individually
           const itemsWithUsernamesPromises = res.data.map(async (obj) => {
             let personsName = "Unknown vrk";
-            console.log(`OBJ: ${JSON.stringify(obj)}`);
     
             if (obj.userID) {
-              try {
                 const user = await client.models.User.get({ id: obj.userID });
                 personsName = user?.data?.name || "Unknown vrk";
-              } catch (error) {
-                console.error(`Failed to fetch user for userID ${obj.userID}:`, error);
-              }
+             
             }
     
             // Get image URL if exists
@@ -573,7 +394,6 @@ setListOfFriendUserIDs(otherUserIds); // this is for real time updates for check
     
           const itemsWithUrlsAndNames = await Promise.all(itemsWithUsernamesPromises);
     
-          console.log(`Items with names and URLs: ${JSON.stringify(itemsWithUrlsAndNames)}`);
     
           if (itemsWithUrlsAndNames.length > 0) {
             result.push([store.storeName, ...itemsWithUrlsAndNames]);
@@ -585,9 +405,7 @@ setListOfFriendUserIDs(otherUserIds); // this is for real time updates for check
         setMyStoreItems(result);
         setStoreIDs(storeIDsList);
     
-      } catch (err) {
-        console.error("Error with retrieveYourStoreObjects: ", err);
-      }
+   
     };
     
 
@@ -602,10 +420,6 @@ setListOfFriendUserIDs(otherUserIds); // this is for real time updates for check
     }
   }, [client, authContext, version, whoseView]);
 
-  useEffect(() => {
-    console.log(`Version: ${version}`);
-  }, [version]);
-
   const handleDialogUpdate = () => {
     setVersion(prev => prev + 1); // force refresh
   };
@@ -613,24 +427,13 @@ setListOfFriendUserIDs(otherUserIds); // this is for real time updates for check
 
   const [storeIDs, setStoreIDs] = useState([]);
 
-  useEffect(() => {
-    console.log(`Test Data: ${storeIDs}`)
 
-    console.log("storeIDs:", storeIDs);
-console.log("Type of storeIDs:", typeof storeIDs);
-console.log("Is Array?", Array.isArray(storeIDs));
-  }, [storeIDs])
 
   useEffect(() => {
-    console.log(`TS PMO: ${storeIDs}`)
     if (storeIDs.length > 0) {
 
       const handleVersionUpdate = (data: any) => {
-        console.log(`Data: ${JSON.stringify(data)}`)
-  
-        console.log("Tester Data: ", data.storeID)
-
-        console.log(storeIDs.includes(data.storeID))
+       
         // @ts-ignore
         if (storeIDs.includes(data.storeID) || listOfFriendUserIDs.includes(data.storeID)) { // instead have an array of all your storeIDs called storeIDs and have this check if the data.storeID is in storeIDs
           // Only update version if the userID matches
@@ -644,7 +447,7 @@ console.log("Is Array?", Array.isArray(storeIDs));
       const createSub = client.models.Storeobject.onCreate().subscribe({
         next: handleVersionUpdate,
         // @ts-ignore
-        error: (error) => console.warn(error),
+        //error: (error) => console.warn(error),
       });
   
       // Subscribe to store object update events
@@ -652,7 +455,7 @@ console.log("Is Array?", Array.isArray(storeIDs));
       const updateSub = client.models.Storeobject.onUpdate().subscribe({
         next: handleVersionUpdate,
         // @ts-ignore
-        error: (error) => console.warn(error),
+       // error: (error) => console.warn(error),
       });
   
       // Subscribe to store object deletion events
@@ -660,7 +463,7 @@ console.log("Is Array?", Array.isArray(storeIDs));
       const deleteSub = client.models.Storeobject.onDelete().subscribe({
         next: handleVersionUpdate,
         // @ts-ignore
-        error: (error) => console.warn(error),
+        //error: (error) => console.warn(error),
       });
   
       // Cleanup on unmount
@@ -673,26 +476,9 @@ console.log("Is Array?", Array.isArray(storeIDs));
     }, [storeIDs, authContext]);
   
 
-    useEffect(() => {
-      console.log(`Whose VIew: ${whoseView}
-            friendListUI: ${JSON.stringify(friendListUI)}
-        `)
-    }, [whoseView, friendListUI])
+   
   
 
-    /*
-<select
-      value={whoseView}
-      onChange={(e) => setWhoseView(e.target.value)}
-    >
-      <option value="yours">Your View</option>
-      {friendListUI.map((friend) => (
-        <option value={friend.name}>
-          {friend.name}
-        </option>
-      ))}
-    </select>
-    */
 
   return (
     <>
