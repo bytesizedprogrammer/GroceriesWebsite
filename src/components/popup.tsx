@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useContext } from "react";
 import { styled } from '@mui/material/styles';
 import { Typography, Stack, Button, Dialog, Select, MenuItem } from "@mui/material";
-//import Box from '@mui/material/Box';
-//import { ThemeProvider } from '@mui/material/styles';
 import "../assets/landingPage.css"
 import ClearIcon from '@mui/icons-material/Clear';
-//import { TextField }  from '@mui/material'; // , InputAdornment, IconButton
 // @ts-ignore
 import { AuthContext } from "../context/AuthContext.jsx"
 import { generateClient } from "aws-amplify/data";
@@ -19,7 +16,7 @@ const client = generateClient<Schema>();
 const Div = styled('div')({
   display: "flex",
   flexWrap: "wrap",
-  flexDirection: "column", // Ensure vertical stacking
+  flexDirection: "column", 
   justifyContent: "center",
   alignItems: "center",
   width: '100%'
@@ -61,26 +58,13 @@ const DynamicDialog: React.FC<DynamicDialogProps> = ({ selectedValue, descriptio
     const [otherUsersStores, setOtherUsersStores] = useState<Store[]>([]);
 
 
-  /*
-    console.log(`
-        Selected Value: ${selectedValue},
-        Description: ${description},
-        open: ${open},
-        onOpen: ${onOpen},
-        onClose: ${onClose},
-        imgUrlAsID: ${imgUrlAsID}    
-    `);
-  */
+
 
 
   const authContext = useContext(AuthContext);
 
 useEffect(() => {
-    const fetchStore = async () => {
-      // @ts-ignore
-      console.log("AUTH: ", authContext.userId);
-  
-      try {
+    const fetchStore = async () => {  
         // @ts-ignore
         const res = await client.models.Store.list({
           filter: {
@@ -93,24 +77,9 @@ useEffect(() => {
   
         // @ts-ignore
         const storeData = res?.[0] ?? null;
-        console.log("Store Data:", storeData);
-        console.log("Res: ", res);
-
-
-
-
-        // add on: 
-          //setStoresToSendTo(prev => [...prev, ...res.data]);
-
-        // replaces
-
         
         // @ts-ignore
         setStoresToSendTo(res.data);
-      
-      } catch (err) {
-        console.error("Error fetching store:", err);
-      }
     };
   
 
@@ -143,14 +112,12 @@ useEffect(() => {
 
        // @ts-ignore
        const idkhomie = res.data
-       console.log("Fetch Amigos: ", idkhomie);
 
        // step 1: filter out non-friends (aka only accept status of accepted)
        const acceptedFriends = idkhomie.filter(
         (friend: any) => friend.statusOfRequest === "ACCEPTED"
       );
     
-      console.log("Accepted Amigos: ", acceptedFriends);
     
 
        // take userIDs and filter out yours:
@@ -164,48 +131,16 @@ useEffect(() => {
        const filteredDataPtTwo = acceptedFriends.filter(item => item.userID2 !== authContext.userId); // filter to remove all instances in res.data in js where userID2 == authContext.userId
        const idListPartTwo = filteredDataPtTwo.map(item => item.userID2);
 
-       console.log("ID LIST PART ONE: ", idListPartOne);
-       console.log("ID LIST PART TWO: ", idListPartTwo);
-
-      //console.log("Filtered Data Part One: ", filteredDataPtOne);
-      //console.log("Filtered Data Part Two: ", filteredDataPtTwo);
-
 
        // COMBO 2 arrays of friends into one
        const tempData = idListPartOne.concat(idListPartTwo); // gives you a single array with all objects from both arrays
        const combinedData = [...new Set(tempData)];
-       console.log("Combined Data: ", combinedData);
 
         // @ts-ignore
         let arr = []; 
 
        // now take friendIDs specifically and fetch all "store" objects that are theirs and SET to setOtherUsersStores
-        
-       /* OLD CODE, good but lacks names
-        for (let i = 0; i < combinedData.length; i++) {
-          console.log("Dont Test Me! ", combinedData[i])
-
-
-          // take the store content here below, but WE NEED TO ADD name from "acceptedAmigos" that matches the correct ID so that when we render everything we can have the name of the profile's owner to indicate whose store you'd put it in.
-
-          const res = await client.models.Store.list({
-            filter: {
-              userID: {
-                // @ts-ignore
-                eq: combinedData[i]
-              }
-            }
-          });
-          console.log("PLS WORK ASASSDADSAD: ", res);
-
-          // res is the data back
-          // @ts-ignore
-          arr = arr.concat(res.data); 
-        }
-        */
-        for (let i = 0; i < combinedData.length; i++) {
-          console.log("Dont Test Me! ", combinedData[i]);
-        
+        for (let i = 0; i < combinedData.length; i++) {        
           // Fetch the user's store
           const res = await client.models.Store.list({
             filter: {
@@ -216,7 +151,6 @@ useEffect(() => {
             }
           });
         
-          console.log("PLS WORK ASASSDADSAD: ", res);
         
         
           // Fetch the user's name from the Users model
@@ -225,8 +159,6 @@ useEffect(() => {
             id: combinedData[i]
           });
         
-          // @ts-ignore
-          console.log("CHECK USER DATA: ", user.data.name);
 
           // @ts-ignore
           const userName = user?.data.name && user.data.name.trim() !== "" ? user.data.name : "Unknown User";
@@ -237,7 +169,6 @@ useEffect(() => {
             userName: userName
           }));
           
-          console.log(`Stores With Names: ${JSON.stringify(storesWithNames)}`);
           
           // Add to the final array
           // @ts-ignore
@@ -258,52 +189,36 @@ useEffect(() => {
 
 
     const handleBoughtFinished = async () => {
-        try {
             // activates another component of another pop up pretty much, "confirmaton.jsx"
-      console.log(`Image URL ID: ${imgUrlAsID}`); // objID
 
 
       // DELETE
       const deleteObj = {
         id: imgUrlAsID
       }
-      await client.models.Storeobject.delete(deleteObj).then(res => {
-        console.log(`✅ Deleted Storeobject: ${res.data}`)
+      await client.models.Storeobject.delete(deleteObj).then(() => {
         handleUpdateClose();
       })
-        } catch (err) {
-          console.error("Error with handleBoughtFinished: ", err);
-        }
+        
     }
 
     const handleChangeStore = async () => {
-        try {
-
-          console.log(`Transaction Finished for Store: ${newStoreID}`); // newStoreID
-          console.log(`Image URL ID: ${imgUrlAsID}`); // objID
-
           const updateObj = {
             storeID: newStoreID,
             id: imgUrlAsID
           }
 
       // UPDATE
-      await client.models.Storeobject.update(updateObj).then(res => {
-        console.log(`✅ Updated Storeobject: ${res.data}`)
+      await client.models.Storeobject.update(updateObj).then(() => {
         handleUpdateClose();
       })
-
-        } catch (err) {
-          console.error("Error with handleChangeStore: ", err);
-
-        }
     }
 
     const handleClose = () => {
       setPageIndex(0);
       setIsReadyToFetchStores(false);
       setNewStoreID('');
-      console.log('on open: ', onOpen);
+      console.log('', onOpen);
       onClose();  
     }
 
@@ -395,7 +310,6 @@ value={newStoreID}
 // @ts-ignore
 onChange={(e: SelectChangeEvent<string>) => {
   const selectedStoreName = e.target.value;
-  console.log(`Selected Store Name: ${selectedStoreName}`)
   setNewStoreID(selectedStoreName)
 }}
 >

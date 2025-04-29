@@ -6,7 +6,6 @@ import { useRouteError } from 'react-router-dom'; //  Link,
 
 const LandingPage: React.FC = () => {
   const error = useRouteError();
-  console.log(error);
   return (
     <>
       <div>

@@ -15,30 +15,16 @@ import Popup from "../components/selectImagePopup.tsx";
 import { generateClient } from "aws-amplify/data";
 // @ts-ignore
 import type { Schema } from "../amplify/data/resource";
-//import { useAuthenticator } from '@aws-amplify/ui-react'; //useAuthenticator,
 
 // @ts-ignore
 import { FileUploader } from '@aws-amplify/ui-react-storage';
 
-//import { ConsoleLogger } from 'aws-amplify/utils';
 
 
 
 const client = generateClient<Schema>();
 
-/*
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
-  height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  whiteSpace: 'nowrap',
-  width: 1,
-});
-*/
+
 const Div = styled('div')({
   display: "flex",
   justifyContent: "center",
@@ -57,23 +43,7 @@ const SubText = styled('h3')({
 
 
 
-// TS interface for object strictness
-/*
-interface Account {
-  name: string;
-}
-*/
-// test chars
-/*
-const accountsToSendTo: Account[] = [
-  {
-    name: "John Pork"
-  },
-  {
-    name: 'Jonkler'
-  }
-];
-*/
+
 interface Store {
   id: string;
   storeName: string;
@@ -117,9 +87,7 @@ const AddItemPage: React.FC = () => {
   
   const [presetOrUploaded, setPresetOrUploaded] = useState("");
 
-  useEffect(() => {
-    console.log("as");
-  }, [presetOrUploaded]);
+
 
   const [refreshIfNeeded, setRefreshIfNeeded] = useState(false);
 
@@ -135,16 +103,11 @@ const AddItemPage: React.FC = () => {
       setUploadFilename(img);
       setRefreshIfNeeded(true);
       setPresetOrUploaded("preset");
-      console.log("Received from Dialog:", img, title);
     }} else {
       // store creation handling
-      console.log(`img: ${img}
-        type: ${type}
-        title: ${title}  
-      `);
 
         if (img == undefined || img == "" || img.toLowerCase() == "escapekeydown" || img == "backdropClick") {
-          console.log("UNDEFINED")
+          console.log("")
         } else {
           const uuid = crypto.randomUUID();
 
@@ -172,11 +135,7 @@ const AddItemPage: React.FC = () => {
 
 
   useEffect(() => {
-    const fetchStore = async () => {
-      // @ts-ignore
-      console.log("AUTH: ", authContext.userId);
-  
-      try {
+    const fetchStore = async () => {  
         // @ts-ignore
         const res = await client.models.Store.list({
           filter: {
@@ -189,24 +148,12 @@ const AddItemPage: React.FC = () => {
   
         // @ts-ignore
         const storeData = res?.[0] ?? null;
-        console.log("Store Data:", storeData);
-        console.log("Res: ", res);
-
-
-
-
-        // add on: 
-          //setStoresToSendTo(prev => [...prev, ...res.data]);
-
-        // replaces
-
+ 
         
         // @ts-ignore
         setStoresToSendTo(res.data);
       
-      } catch (err) {
-        console.error("Error fetching store:", err);
-      }
+     
     };
   
 
@@ -239,14 +186,12 @@ const AddItemPage: React.FC = () => {
 
        // @ts-ignore
        const idkhomie = res.data
-       console.log("Fetch Amigos: ", idkhomie);
 
        // step 1: filter out non-friends (aka only accept status of accepted)
        const acceptedFriends = idkhomie.filter(
         (friend: any) => friend.statusOfRequest === "ACCEPTED"
       );
     
-      console.log("Accepted Amigos: ", acceptedFriends);
     
 
        // take userIDs and filter out yours:
@@ -260,47 +205,17 @@ const AddItemPage: React.FC = () => {
        const filteredDataPtTwo = acceptedFriends.filter(item => item.userID2 !== authContext.userId); // filter to remove all instances in res.data in js where userID2 == authContext.userId
        const idListPartTwo = filteredDataPtTwo.map(item => item.userID2);
 
-       console.log("ID LIST PART ONE: ", idListPartOne);
-       console.log("ID LIST PART TWO: ", idListPartTwo);
-
-      //console.log("Filtered Data Part One: ", filteredDataPtOne);
-      //console.log("Filtered Data Part Two: ", filteredDataPtTwo);
 
 
        // COMBO 2 arrays of friends into one
        const tempData = idListPartOne.concat(idListPartTwo); // gives you a single array with all objects from both arrays
        const combinedData = [...new Set(tempData)];
-       console.log("Combined Data: ", combinedData);
 
         // @ts-ignore
         let arr = []; 
 
        // now take friendIDs specifically and fetch all "store" objects that are theirs and SET to setOtherUsersStores
-        
-       /* OLD CODE, good but lacks names
         for (let i = 0; i < combinedData.length; i++) {
-          console.log("Dont Test Me! ", combinedData[i])
-
-
-          // take the store content here below, but WE NEED TO ADD name from "acceptedAmigos" that matches the correct ID so that when we render everything we can have the name of the profile's owner to indicate whose store you'd put it in.
-
-          const res = await client.models.Store.list({
-            filter: {
-              userID: {
-                // @ts-ignore
-                eq: combinedData[i]
-              }
-            }
-          });
-          console.log("PLS WORK ASASSDADSAD: ", res);
-
-          // res is the data back
-          // @ts-ignore
-          arr = arr.concat(res.data); 
-        }
-        */
-        for (let i = 0; i < combinedData.length; i++) {
-          console.log("Dont Test Me! ", combinedData[i]);
         
           // Fetch the user's store
           const res = await client.models.Store.list({
@@ -312,7 +227,6 @@ const AddItemPage: React.FC = () => {
             }
           });
         
-          console.log("PLS WORK ASASSDADSAD: ", res);
         
         
           // Fetch the user's name from the Users model
@@ -320,9 +234,6 @@ const AddItemPage: React.FC = () => {
             // @ts-ignore
             id: combinedData[i]
           });
-        
-          // @ts-ignore
-          console.log("CHECK USER DATA: ", user.data.name);
 
           // @ts-ignore
           const userName = user?.data.name && user.data.name.trim() !== "" ? user.data.name : "Unknown User";
@@ -333,7 +244,6 @@ const AddItemPage: React.FC = () => {
             userName: userName
           }));
           
-          console.log(`Stores With Names: ${JSON.stringify(storesWithNames)}`);
           
           // Add to the final array
           // @ts-ignore
@@ -351,9 +261,7 @@ const AddItemPage: React.FC = () => {
     if (client && authContext?.userId) fetchFriends();
   }, [client, authContext]);
   
-  useEffect(() => {
-    console.log("TS: ", otherUsersStores);
-  }, [otherUsersStores])
+
 
   
 
@@ -365,51 +273,10 @@ const AddItemPage: React.FC = () => {
   const submitForm = async (e: React.FormEvent) => {
     e.preventDefault(); 
 
-   // const uuid = crypto.randomUUID();
-
-    // time, date
-  //  const dataForWhoAddedAndWhen = "2025-04-12T18:48:36.649Z";
-    
-  /*
-  if (!uploadFileName) {
-      alert("Please select an image.");
-      return;
-    }
-
-    const imageUrl = await uploadImageToS3(uploadFileName);
-    if (!imageUrl) {
-      alert("Image upload failed.");
-      return;
-    }
-    */
-
-    /*
-    const createObj = {
-      //id: uuid,
-      storeID: storeID,
-      objectName: productName,
-      //objectImage: selectedImage,
-      //datetimeObjectWasAdded: ,
-      objectImage: "image",
-      //datetimeObjectWasAdded: dataForWhoAddedAndWhen,
-      quantityOfProduct: quantityOfProduct,
-      //addedByWhichUserID: storeID
-
-      /*
-      addedByWhichUserID: {
-        connect: {
-          id: storeID
-        }
-      }
-      
-    };
-    */
-    //console.log("Keys: ", Object.keys(client.models.Object.schema));
-
+   
 
     const dataForWhoAddedAndWhen = new Date().toISOString();
     const createObj = {
-      //storeID: { id: storeID },  // Wrapping storeID in an object
 
       storeID: storeID,
       objectName: productName || null,  // Handle optional fields
@@ -422,24 +289,10 @@ const AddItemPage: React.FC = () => {
       // @ts-ignore
       userID: authContext.userId
   
-  
-    /*
-      objectName: productName || null,  // Handle optional fields
-  objectImage: 'image' || null,     // Handle optional fields
-  storeID: storeID || null,         // Handle optional fields
-  quantityOfProduct: quantityOfProduct || null,  // Handle optional fields
-  datetimeObjectWasAdded: dataForWhoAddedAndWhen || null // Handle optional fields
-  */
     }
 
 
-    console.log('Obj:', createObj);
-    console.log("PLEASE GET ME INFO: ", client.models)
-
-// good, js on pause for onw
-
-try {
-    client.models.Storeobject.create(createObj).then((res) => { 
+    client.models.Storeobject.create(createObj).then(() => { 
       //window.location.reload();
  // Reset the form fields after submission
  setProductName('');
@@ -447,67 +300,10 @@ try {
  setStoreName('');
  setSelectedImage('');
  setSelectedImageTitle('');
- console.log("Successfully created object.");
-    console.log("✅ Created object successfully:", res);
+    })
+  }
 
-    }).catch(err => {
-      console.error("Error with creating object (in .catch):", err);
-    });
   
-  } catch (err) {
-    console.error("Error with creating object: ", err);
-  }
-
-
-console.log("Created Object we're submitting: ", createObj);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-try {
-  const result = await client.models.Object.create(createObj);
-  console.log("Created object:", result);
-
-  // Reset the form fields
-  setProductName('');
-  setQuantityOfProduct(0);
-  setStoreName('');
-  setSelectedImage('');
-  setSelectedImageTitle('');
-} catch (err) {
-  console.error("Error with creating object (in try/catch):", err);
-}
-*/
-
-/*
-client.models.Object.create({ input: createObj })
-  .then((res) => {
-    console.log("✅ Created object successfully:", res);
-    console.log(client.models.Object);
-
-  })
-  .catch((err) => {
-    console.error("❌ Error creating object:", err);
-  });
-*/
-  }
-
-  useEffect(() => {
-    console.log("Upload File Name Data: ", uploadFileName);
-  }, [uploadFileName]);
 
   const processFile = (file: File) => {
   const reader = new FileReader();
@@ -522,56 +318,8 @@ client.models.Object.create({ input: createObj })
   const [inputEl, setInputEl] = useState(null);
   
   useEffect(() => {
-    console.log("InputEL: ", inputEl)
+    
   }, [inputEl]);
-
-  /*
-  useEffect(() => {
-    const handleVersionUpdate = (data: any) => {
-      console.log(`Data: ${JSON.stringify(data)}`)
-      setVersion((prevVersion) => prevVersion + 1);
-
-      // @ts-ignore
-      if (data.userID === authContext.userId) {
-        // Only update version if the userID matches
-        // @ts-ignore
-        setVersion((prevVersion) => prevVersion + 1);
-      }
-    };
-
-    // Subscribe to store object creation events
-    // @ts-ignore
-    const createSub = client.models.Storeobject.onCreate().subscribe({
-      next: handleVersionUpdate,
-      // @ts-ignore
-      error: (error) => console.warn(error),
-    });
-
-    // Subscribe to store object update events
-    // @ts-ignore
-    const updateSub = client.models.Storeobject.onUpdate().subscribe({
-      next: handleVersionUpdate,
-      // @ts-ignore
-      error: (error) => console.warn(error),
-    });
-
-    // Subscribe to store object deletion events
-    // @ts-ignore
-    const deleteSub = client.models.Storeobject.onDelete().subscribe({
-      next: handleVersionUpdate,
-      // @ts-ignore
-      error: (error) => console.warn(error),
-    });
-
-    // Cleanup on unmount
-    return () => {
-      createSub.unsubscribe();
-      updateSub.unsubscribe();
-      deleteSub.unsubscribe();
-    };
-  }, []);
-
-  */
 
   return (
     <>

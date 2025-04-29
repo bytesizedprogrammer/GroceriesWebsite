@@ -18,7 +18,6 @@ const Navbar: React.FC = () => {
   const handleClose = (param: string) => {
     setAnchorEl(null);
 
-    console.log(param)
 
 
     if (param == 'goHome') {

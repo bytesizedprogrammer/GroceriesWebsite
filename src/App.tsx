@@ -78,10 +78,6 @@ const router = createBrowserRouter([
       useEffect(() => {
         if (!dispatch) return;
 
-        console.log("User: ", user.user);
-       // console.log("App User: ", appUser);
-      
-       console.log("CLIENT!", client)  // uncomment to see how it works
       
       
       const createObj = {
@@ -95,11 +91,8 @@ const router = createBrowserRouter([
         //name: user.user.username
       }
       
-      console.log("OBJECTTTTTT: ", createObj);
       
       client.models.User.get({ id: user.user.userId }).then((userData) => {
-        //console.log("Word", userData)
-        console.log('test: ', userData.data);
         if (!(userData.data)) {
           client.models.User.create(createObj).then(() => { window.location.reload();});         
         } else {
@@ -118,7 +111,6 @@ const router = createBrowserRouter([
               stores: userData.data.stores ?? [],
             },
           });
-          console.log("DISPATCH")
         }
       })
     }, [client, user, dispatch]);
@@ -147,4 +139,3 @@ const router = createBrowserRouter([
   export default App;
 
 
-  // https://chatgpt.com/c/67e87fa7-9998-8008-9fb7-fcb8c52a5ef8 
